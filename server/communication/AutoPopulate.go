@@ -1,0 +1,1161 @@
+package communication
+
+import (
+	"database/sql"
+	"fmt"
+	"prismDB/utils"
+	"strings"
+	"time"
+
+	_ "embed"
+
+	_ "modernc.org/sqlite"
+)
+
+//go:embed prismdb-template.sql
+var template string
+
+func Create(auto utils.AutoPopulate) utils.Ack {
+	db, err := sql.Open("sqlite", auto.DBPath)
+	db.SetMaxOpenConns(1)
+	if err != nil {
+		return utils.Ack{
+			OK:      false,
+			Message: "Cannot Create database",
+		}
+	}
+
+	ack := autoPopulateIndependentTables(db)
+	if !ack.OK {
+		return ack
+	}
+	for i := range auto.RxNames {
+		ack := autoPopulateRxRelated(db, auto.RxNames[i], auto.RxFrequencies[i], auto.RxModulation[i])
+		if !ack.OK {
+			return ack
+		}
+	}
+
+	for i := range auto.TxNames {
+		ack := autoPopulateTxRelated(db, auto.TxNames[i], auto.TxFrequencies[i], auto.TxPowers[i], auto.TxModulation[i])
+		if !ack.OK {
+			return ack
+		}
+	}
+
+	for i := range auto.TPNames {
+		ack := autoPopulateTPRelated(db, auto.TPNames[i], auto.TPRxNames[i], auto.TPTxNames[i])
+		if !ack.OK {
+			return ack
+		}
+	}
+
+	for i := range auto.ConfigNames {
+		var plName string
+		if i < len(auto.ConfigPlNames) {
+			plName = auto.ConfigPlNames[i]
+		}
+		ack := autoPopulateConfigurations(db, auto.ConfigNames[i], auto.ConfigTypes[i], auto.ConfigRxNames[i], auto.ConfigTxNames[i], auto.ConfigTPNames[i], plName)
+		if !ack.OK {
+			return ack
+		}
+	}
+
+	for i := range auto.PlNames {
+		ack := autoPopulatePLRelated(db, auto.PlNames[i])
+		if !ack.OK {
+			return ack
+		}
+	}
+
+	//todo: Cable Calibration table to be added
+
+	return utils.Ack{
+		OK:      true,
+		Message: "Database is Created",
+	}
+
+}
+
+func autoPopulateIndependentTables(db *sql.DB) utils.Ack {
+	tx, err := db.Begin()
+	if err != nil {
+		return utils.Ack{
+			Message: "Unable to obtain Transaction Lock",
+			OK:      false,
+		}
+	}
+	_, err = tx.Exec(template)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert through sql file",
+			OK:      false,
+		}
+	}
+
+	//TestPhase with actual date and time
+	now := time.Now()
+	var testPhaseName string = "Pre-T&E"
+	date := now.Format("02-01-2006")
+	time := now.Format("15:04:05")
+	var selected int = 1
+	query := `INSERT INTO TestPhases(Name, CreationDate, CreationTime, Selected)
+	VALUES (?,?,?,?)`
+	_, err = tx.Exec(query, testPhaseName, date, time, selected)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in TestPhases Table",
+			OK:      false,
+		}
+	}
+	tx.Commit()
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+}
+
+func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation string) utils.Ack {
+	tx, err := db.Begin()
+	if err != nil {
+		return utils.Ack{
+			Message: "Unable to obtain Transaction Lock",
+			OK:      false,
+		}
+	}
+	//SpecRX
+	values := getDefaultRxSpecs(modulation)
+	query := `INSERT INTO SpecRx 
+	(RxName, Frequency, MaxPower, TCSubCarrierFrequency, ModulationScheme, AcquisitionOffset, SweepRange, SweepRate, TCModIndex, FrequencyDeviationFM)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, rxName, freq, values[0], values[8], modulation, values[5], values[4], values[3], values[9], values[10])
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpecRx Table",
+			OK:      false,
+		}
+	}
+	//SpecRxTMTC
+	tmValues := getSampleRxTM(rxName)
+	query = `INSERT INTO SpecRxTMTC 
+	(RxName, LockStatusMnemonic, LockStatusValue, BSLockStatusMnemonic, BSLockStatusValue, AGCMnemonic, LoopStressMnemonic, CommandCounterMnemonic, TestCommandSet, TestCommandReset)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, rxName, tmValues[0], tmValues[1], tmValues[2], tmValues[3], tmValues[4], tmValues[6], tmValues[5], "SET", "RESET")
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpecRxTM Table",
+			OK:      false,
+		}
+	}
+	//SpectrumProfile for Rx
+	spectrumValues := getSampleSpectrumSettings()
+	query = `INSERT INTO SpectrumProfile 
+	(Name, CenterFrequency, Span, RBW, VBW)
+	VALUES (?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, rxName+"-Uplink", freq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpectrumSettings Table",
+			OK:      false,
+		}
+	}
+	// Frequency Profile for CDMA Doppler Test
+	if modulation == "CDMA" {
+		query := `INSERT INTO FrequencyProfile(Name, MaxFrequency,StepSize,CommandingRequired,DopplerFile)VALUES (?,?,?,?,?)`
+		_, err = tx.Exec(query, "Doppler-CDMA", 125000.0, 25000.0, "Yes", "/umacs/umacsops/sarc/resources/doppler.csv")
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert in FrequencyProfile Table",
+				OK:      false,
+			}
+		}
+	}
+
+	// Test Specific Profile for receiver in PowerProfile Table
+	if modulation == "FM" || modulation == "PSK" || modulation == "FSK" {
+		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		_, err = tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert in PowerProfile Table",
+				OK:      false,
+			}
+		}
+	} else if modulation == "PM" {
+		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		_, err1 := tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
+		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
+		if err1 != nil || err2 != nil {
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert in PowerProfile Table",
+				OK:      false,
+			}
+		}
+	} else if modulation == "CDMA" {
+		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		_, err = tx.Exec(query, "DopplerProfile", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
+		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
+		if err != nil || err2 != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert in PowerProfile Table",
+				OK:      false,
+			}
+		}
+	}
+
+	//TM Profile for receiver in TMProfile Table
+	preReq, _ := getRxTM(rxName)
+	query = `INSERT INTO TMProfile(Name, PreRequisiteTM, LogTM)
+	VALUES(?,?,?)`
+	_, err = tx.Exec(query, rxName+"-TM", preReq, "")
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in TMProfile Table",
+			OK:      false,
+		}
+	}
+
+	//UpConverter Entries in UpDownConverter Table
+	var upConverterNanme string = "UpConverter-" + rxName
+	var IF float64 = 70e6
+	var maxPowerCable int32 = -10
+	var minPowerCable int32 = -90
+	var maxPowerRadiated int32 = -50
+	var minPowerRadiated int32 = -90
+	query = `INSERT INTO UpDownConverter(Name, InputFrequency, OutputFrequency, MaxPowerCable, MinPowerCable, MaxPowerRadiated, MinPowerRadiated)
+	VALUES (?, ?, ?, ?, ?, ?, ?);`
+	_, err = tx.Exec(query, upConverterNanme, IF, freq, maxPowerCable, minPowerCable, maxPowerRadiated, minPowerRadiated)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert UpConverter Details in UpDownConverter Table",
+			OK:      false,
+		}
+	}
+
+	tx.Commit()
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+
+}
+
+func getRxTM(rxName string) (string, string) {
+	lockMnenonic := rxName + "-Lock-Sts"
+	tempMnemonic := rxName + "-Tmp"
+	pre := lockMnenonic + "," + tempMnemonic
+	post := pre
+	return pre, post
+}
+
+func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float64, modulation string) utils.Ack {
+	var null sql.NullString
+	null.Valid = false
+
+	tx, err := db.Begin()
+	if err != nil {
+		return utils.Ack{
+			Message: "Unable to obtain Transaction Lock",
+			OK:      false,
+		}
+	}
+	//SpecTx
+	valuesFloat, _, isBurst, burstTime := getDefaultTxSpecs(modulation, freq)
+	query := `INSERT INTO SpecTx 
+	(TxName, Frequency, Power, Spurious, Harmonics, AllowedFrequencyDeviation, AllowedPowerDevaition, ModulationScheme, IsBurst, BurstTime)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, txName, freq, power, valuesFloat[0], valuesFloat[1], valuesFloat[2], valuesFloat[3], modulation, isBurst, burstTime)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpecTx Table",
+			OK:      false,
+		}
+	}
+	//SpecTxHarmonics
+
+	query = `INSERT INTO SpecTxHarmonics
+	(TxName, HarmonicsID, HarmonicType, HarmonicsName, Frequency, TotalLossFromTxToSA)
+	VALUES (?, ?, ?,?, ?, ?)`
+
+	for i := 1; i < 3; i++ {
+		var harmType string = "Harmonic"
+		var harmFreq float64 = freq * 2
+		var name string = "Second"
+		if i == 2 {
+			harmFreq = freq * 3
+			name = "Third"
+		}
+		_, err = tx.Exec(query, txName, i, harmType, name, harmFreq, 0.0)
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert Harmonics in SpecTxHarmonics Table",
+				OK:      false,
+			}
+		}
+	}
+	//SpecTxsubCarriers
+
+	query = `INSERT INTO SpecTxSubCarriers
+	(TxName, SubCarrierID, SubCarrierName, Frequency, ModIndex, AllowedModIndexDeviation, AlwaysPresent, PeakFrequencyDeviation)
+	VALUES (?,?,?,?,?,?,?,?)`
+
+	if modulation == "PM" {
+		for i := 1; i < 3; i++ {
+			var subCarrID int = i
+			var subCarrName string = "TM"
+			var subCarrFreq float64 = 32000
+			var subCarrMI float64 = 0.8
+			var MIDev float64 = 0.0
+			var alwaysPresent = "Yes"
+			var peakFreqDev sql.NullFloat64
+			peakFreqDev.Valid = false
+			if i == 2 {
+				subCarrName = "PB"
+				alwaysPresent = "No"
+				subCarrFreq = 128000
+			}
+			_, err = tx.Exec(query, txName, subCarrID, subCarrName, subCarrFreq, subCarrMI, MIDev, alwaysPresent, peakFreqDev)
+			if err != nil {
+				fmt.Println(err)
+				tx.Rollback()
+				return utils.Ack{
+					Message: "Unable to insert  SubCarrier in SpexTxSubCarriers Table",
+					OK:      false,
+				}
+			}
+		}
+
+	} else if modulation == "FSK" {
+
+		_, err = tx.Exec(query, txName, 1, "FSK", 0, null, null, "Yes", 40000)
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert freq deviation for FSK in SpexTxSubCarriers Table",
+				OK:      false,
+			}
+		}
+	}
+	//SpectrumProfile for Tx
+	spectrumValues := getSampleSpectrumSettings()
+	query = `INSERT INTO SpectrumProfile 
+	(Name, CenterFrequency, Span, RBW, VBW)
+	VALUES (?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, txName+"-Downlink", freq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpectrumProfile Table",
+			OK:      false,
+		}
+	}
+	spectrumValues[0] = 1e6
+	_, err = tx.Exec(query, txName+"-In-Band", freq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert Inband Spurious in SpectrumProfile Table",
+			OK:      false,
+		}
+	}
+	spectrumValues[0] = 100e6
+	_, err = tx.Exec(query, txName+"-Out-Band", freq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert OutOfBand Spurious in SpectrumProfile Table",
+			OK:      false,
+		}
+	}
+	//TM Profile for transmitter in TMProfile Table
+	preReq, _ := getTxTM(txName)
+	query = `INSERT INTO TMProfile(Name, PreRequisiteTM, LogTM)
+	VALUES(?,?,?)`
+	_, err = tx.Exec(query, txName+"-TM", preReq, "")
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert Tx TM in TMProfile Table",
+			OK:      false,
+		}
+	}
+
+	query = `INSERT INTO UpDownConverter(Name, InputFrequency, OutputFrequency, MaxPowerCable, MinPowerCable, MaxPowerRadiated, MinPowerRadiated)
+	VALUES (?, ?, ?, ?, ?, ?, ?);`
+
+	var downConverterNanme string = "DownConverter-" + txName
+	var IF float64 = 70e6
+	var maxPowerCable int32 = -20
+	var minPowerCable int32 = -60
+	var maxPowerRadiated int32 = -40
+	var minPowerRadiated int32 = -90
+	_, err = tx.Exec(query, downConverterNanme, freq, IF, maxPowerCable, minPowerCable, maxPowerRadiated, minPowerRadiated)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert DownConverter Details in UpDownConverter Table",
+			OK:      false,
+		}
+	}
+	tx.Commit()
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+
+}
+
+func getTxTM(txName string) (string, string) {
+	onMnenonic := txName + "-On-Sts"
+	tempMnemonic := txName + "-Tmp"
+	pre := onMnenonic + "," + tempMnemonic
+	post := pre
+	return pre, post
+}
+
+func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName string) utils.Ack {
+	tx, err := db.Begin()
+	if err != nil {
+		return utils.Ack{
+			Message: "Unable to obtain Transaction Lock",
+			OK:      false,
+		}
+	}
+
+	query := "Select Frequency from SpecRx where RxName = ?"
+	rows, err := tx.Query(query, rxName)
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to read from SpecRx Table",
+			OK:      false,
+		}
+	}
+	freqs, ok := readSingleColumnFloat(rows)
+	if !ok {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to read from SpecRx Table",
+			OK:      false,
+		}
+	}
+	rows.Close()
+	rxFreq := freqs[0]
+
+	query = "Select Frequency from SpecTx where TxName = ?"
+	rows, err = tx.Query(query, txName)
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to read from SpecTx Table",
+			OK:      false,
+		}
+	}
+	freqs, ok = readSingleColumnFloat(rows)
+	if !ok {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to read from SpecTx Table",
+			OK:      false,
+		}
+	}
+	rows.Close()
+	txFreq := freqs[0]
+	//SpecTp
+	query = `INSERT INTO SpecTp 
+	(TpName, RxName, TxName)
+	VALUES (?, ?, ?)`
+	_, err = tx.Exec(query, tpName, rxName, txName)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpecTransponder Table",
+			OK:      false,
+		}
+	}
+	//SpecTpRanging
+	query = `INSERT INTO SpecTpRanging 
+	(TpName, RangingID, RangingName, ToneFrequency, UplinkToneMIOnlyRanging, UplinkToneMISimultaneousCmdAndRanging,
+		TCMISimultaneousCmdAndRanging, DownlinkMI, AllowedDownlinkMIDeviation, AvailableForCommanding)
+	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+	for i := 1; i < 3; i++ {
+		var rngID int = i
+		var rngName string = "500kHz-Tone"
+		var rngFreq float64 = 500000
+		var cmding string = "Yes"
+		var toneMIRng float64 = 1.2
+		var toneMICmdRng float64 = 1
+		var tcMICmdRng float64 = 1
+		var dlMI float64 = 1
+		var dlMIDev float64 = 0
+		if i == 2 {
+			rngID = i + 1
+			rngName = "100kHz-Tone"
+			rngFreq = 100000
+
+		}
+		_, err = tx.Exec(query, tpName, rngID, rngName, rngFreq, toneMIRng, toneMICmdRng, tcMICmdRng, dlMI, dlMIDev, cmding)
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert tones in SpecTransponderRanging Table",
+				OK:      false,
+			}
+		}
+	}
+	//SpectrumProfile for TP
+	spectrumValues := getSampleSpectrumSettings()
+	query = `INSERT INTO SpectrumProfile 
+	(Name, CenterFrequency, Span, RBW, VBW)
+	VALUES (?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, tpName+"-Uplink", rxFreq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpectrumSettings Table",
+			OK:      false,
+		}
+	}
+
+	query = `INSERT INTO SpectrumProfile 
+	(Name, CenterFrequency, Span, RBW, VBW)
+	VALUES (?, ?, ?, ?, ?)`
+	_, err = tx.Exec(query, tpName+"-Downlink", txFreq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in SpectrumSettings Table",
+			OK:      false,
+		}
+	}
+	//TM Profile for transponder in TMProfile Table
+	preRx, _ := getRxTM(rxName)
+	preTx, _ := getTxTM(txName)
+	var preReq string = preRx + "," + preTx
+	query = `INSERT INTO TMProfile(Name, PreRequisiteTM, LogTM)
+	VALUES(?,?,?)`
+	_, err = tx.Exec(query, tpName+"-TM", preReq, "")
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in TMProfile Table",
+			OK:      false,
+		}
+	}
+
+	tx.Commit()
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+}
+
+func autoPopulatePLRelated(db *sql.DB, plName string) utils.Ack {
+	tx, err := db.Begin()
+	if err != nil {
+		fmt.Println(err)
+		return utils.Ack{
+			OK:      false,
+			Message: "Cannot Connect to Insert PL :" + err.Error(),
+		}
+	}
+
+	statement, err := tx.Prepare("insert into SpecPL (ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, PulsePeriod, PulseWidth) values(?, ?, ?, ?, ?, ?, ?)")
+	if err != nil {
+		fmt.Println("Error inserting PL:", err)
+		tx.Rollback()
+		return utils.Ack{
+			OK:      false,
+			Message: "Error formatting query for PL :" + err.Error(),
+		}
+	}
+	defer statement.Close()
+
+	_, err = statement.Exec(plName, "Normal", 1.0, 2e9, -20.0, 1e-3, 1e-6)
+	if err != nil {
+		fmt.Println("Error inserting PL:", err)
+		tx.Rollback()
+		return utils.Ack{
+			OK:      false,
+			Message: "Cannot Connect to Insert PL :" + err.Error(),
+		}
+	}
+
+	tx.Commit()
+
+	return utils.Ack{
+		OK:      true,
+		Message: "Payload Successfully Populated",
+	}
+}
+
+func autoPopulateConfigurations(db *sql.DB, configName string, configType string, rxName string, txName string, tpName string, plName string) utils.Ack {
+	tx, err := db.Begin()
+	if err != nil {
+		return utils.Ack{
+			Message: "Unable to obtain Transaction Lock",
+			OK:      false,
+		}
+	}
+	valuesString, valueInt := getDefaultConfigs(configType)
+	query := `INSERT INTO Configurations(ConfigName, ConfigType, RxName, TxName, TpName, PayloadName,
+		TSMConfigurationName, CortexIFM, IntermediateFrequency, ProgrammableAttnUsed, DeviceProfileName)
+	VALUES (?,?,?,?,?,?,?,?,?,?,?)`
+	_, err = tx.Exec(query, configName, configType, rxName, txName, tpName, plName, valuesString[0], valuesString[2],
+		valueInt, valuesString[4], "Default")
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			Message: "Unable to insert in Configurations Table",
+			OK:      false,
+		}
+	}
+
+	//Uplink Loss for receiver
+	var testPhase string = "Pre-T&E"
+	if strings.EqualFold(configType, "Rx") || strings.EqualFold(configType, "Tp") {
+		var uplinkLoss string = "1,Common Loss,0.0,Common\n2,PM Loss,0,PM\n3,Spacecraft Loss,0.0,Spacecraft\n4,SA Loss,0.0,SA"
+		query = `INSERT INTO UplinkLoss(ConfigName, TestPhaseName, Profile)VALUES (?,?,?)`
+		_, err = tx.Exec(query, configName, testPhase, uplinkLoss)
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert Uplink Loss for receiver",
+				OK:      false,
+			}
+		}
+	}
+
+	//Downlink Loss for transmitter
+	if strings.EqualFold(configType, "Tx") || strings.EqualFold(configType, "Tp") {
+		var downlinkLoss string = "1,Common Loss,0.0,Common\n2,PM Loss,0.0,PM\n3,SA Loss,0.0,SA"
+		query = `INSERT INTO DownlinkLoss(ConfigName, TestPhaseName, Profile)VALUES (?,?,?)`
+		_, err = tx.Exec(query, configName, testPhase, downlinkLoss)
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert Downlink Loss for transmitter",
+				OK:      false,
+			}
+		}
+	}
+
+	populateTests(tx, configType, configName, rxName, txName, tpName)
+
+	tx.Commit()
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+
+}
+
+func populateTests(tx *sql.Tx, configType string, configName string, rxName string, txName string, tpName string) {
+	if strings.EqualFold(configType, "Tp") {
+		populateTpTestsForConfig(tx, configName, tpName)
+	}
+	if strings.EqualFold(configType, "Tx") {
+		populateTxTestsForConfig(tx, configName, txName)
+	}
+	if strings.EqualFold(configType, "Rx") {
+		populateRxTestsForConfig(tx, configName, rxName)
+	}
+}
+
+func populateRxTestsForConfig(tx *sql.Tx, configName string, rxName string) utils.Ack {
+	query := "SELECT ModulationScheme from SpecRx where RxName = ?"
+	rows, err := tx.Query(query, rxName)
+	if err != nil {
+		return utils.Ack{
+			OK:      false,
+			Message: "Cannot get Modulation from SpecRx Table",
+		}
+	}
+	modulation, ok := readSingleString(rows)
+	if !ok {
+		return utils.Ack{
+			OK:      false,
+			Message: "Cannot get Modulation from SpecRx Table",
+		}
+	}
+	rows.Close()
+	var null sql.NullString
+	null.Valid = false
+	var normal sql.NullString
+	normal.Valid = true
+	normal.String = "Normal"
+	var extreme sql.NullString
+	extreme.Valid = true
+	extreme.String = "Extreme"
+	var verify sql.NullString
+	verify.Valid = true
+	verify.String = "Verify"
+	var verifyDoppler sql.NullString
+	verifyDoppler.Valid = true
+	verifyDoppler.String = "VerifyDoppler"
+
+	rxTestTypes := make([]string, 0)
+	rxTestCategories := make([]sql.NullString, 0)
+	if modulation == "PM" {
+		rxTestTypes = append(rxTestTypes, "RFUplink", "CommandDynamic", "LockDynamic", "LoopStress", "LoopStress")
+		rxTestCategories = append(rxTestCategories, null, verify, verify, normal, extreme)
+	} else if modulation == "CDMA" {
+		rxTestTypes = append(rxTestTypes, "RFUplink", "CommandDynamic", "LockDynamic", "CarrierAcquisition", "CarrierAcquisition")
+		rxTestCategories = append(rxTestCategories, null, verifyDoppler, verify, normal, extreme)
+	} else {
+		rxTestTypes = append(rxTestTypes, "RFUplink", "CommandDynamic", "CarrierAcquisition", "CarrierAcquisition")
+		rxTestCategories = append(rxTestCategories, null, verify, normal, extreme)
+	}
+
+	for i := range len(rxTestTypes) {
+		values := getDefaultForRxTests(rxTestTypes[i], rxTestCategories[i], rxName)
+		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+					DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
+					TMProfileName )
+					VALUES (?,?,?,?,?,?,?,?,?)`
+		_, err := tx.Exec(query, configName, rxTestTypes[i], rxTestCategories[i], values[0], values[1], values[2], values[4], values[3],
+			values[6])
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert Rx Tests ",
+				OK:      false,
+			}
+		}
+	}
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+
+}
+
+func populateTxTestsForConfig(tx *sql.Tx, configName string, txName string) utils.Ack {
+
+	query := `SELECT ModulationScheme from SpecTx where TxName = ?`
+	rows, err := tx.Query(query, txName)
+	if err != nil {
+		return utils.Ack{
+			OK:      false,
+			Message: "Cannot get Modulation from SpexTX Table",
+		}
+	}
+	modulation, ok := readSingleString(rows)
+	if !ok {
+		return utils.Ack{
+			OK:      false,
+			Message: "Cannot get Modulation from SpexTX Table",
+		}
+	}
+	rows.Close()
+	var null sql.NullString
+	null.Valid = false
+
+	var power sql.NullString
+	var harm sql.NullString
+	var inband sql.NullString
+	var outband sql.NullString
+
+	power.Valid = true
+	power.String = "Non-Coherent"
+	harm.Valid = true
+	harm.String = "Harmonics"
+	inband.Valid = true
+	inband.String = "In-Band"
+	outband.Valid = true
+	outband.String = "Out-Band"
+	var subcarrTM sql.NullString
+	subcarrTM.Valid = true
+	subcarrTM.String = "TM"
+	var subcarrPB sql.NullString
+	subcarrPB.Valid = true
+	subcarrPB.String = "PB"
+	txTestTypes := make([]string, 0)
+	txTestCategories := make([]sql.NullString, 0)
+	if modulation == "PM" {
+		txTestTypes = append(txTestTypes, "PowerMeasurement", "FrequencyMeasurement", "HarmonicsMeasurement", "SpuriousMeasurement", "SpuriousMeasurement", "ModIndexMeasurement", "ModIndexMeasurement")
+		txTestCategories = append(txTestCategories, power, null, harm, inband, outband, subcarrTM, subcarrPB)
+	} else if modulation == "PSK" {
+		txTestTypes = append(txTestTypes, "PowerMeasurement", "FrequencyMeasurement", "HarmonicsMeasurement", "SpuriousMeasurement", "SpuriousMeasurement", "BandwidthMeasurement")
+		txTestCategories = append(txTestCategories, power, null, harm, inband, outband, null)
+	} else {
+		txTestTypes = append(txTestTypes, "PowerMeasurement", "FrequencyMeasurement", "HarmonicsMeasurement", "SpuriousMeasurement", "SpuriousMeasurement")
+		txTestCategories = append(txTestCategories, power, null, harm, inband, outband)
+	}
+
+	for i := range len(txTestTypes) {
+		values := getDefaultForTxTests(txTestTypes[i], txTestCategories[i], txName)
+		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
+						TMProfileName )
+						VALUES (?,?,?,?,?,?,?,?,?)`
+		_, err := tx.Exec(query, configName, txTestTypes[i], txTestCategories[i], values[0], values[1], values[2], values[4], values[3],
+			values[6])
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert Tx Tests ",
+				OK:      false,
+			}
+		}
+	}
+
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+}
+func populateTpTestsForConfig(tx *sql.Tx, configName string, tpName string) utils.Ack {
+	var majorTone sql.NullString
+	var minorTone sql.NullString
+	var subCarr1 sql.NullString
+	var subCarr2 sql.NullString
+	majorTone.Valid = true
+	majorTone.String = "500kHz-Tone"
+	minorTone.Valid = true
+	minorTone.String = "100kHz-Tone"
+	subCarr1.Valid = true
+	subCarr1.String = "TM"
+	subCarr2.Valid = true
+	subCarr2.String = "PB"
+
+	tpTestTypes := make([]string, 0)
+	tpTestCategories := make([]sql.NullString, 0)
+	tpTestTypes = append(tpTestTypes, "Ranging", "Ranging", "SimultaneousCommandingAndRanging", "SimultaneousCommandingAndRanging", "ModIndexMeasurement", "ModIndexMeasurement", "ModIndexMeasurement", "ModIndexMeasurement")
+	tpTestCategories = append(tpTestCategories, majorTone, minorTone, majorTone, minorTone, majorTone, minorTone, subCarr1, subCarr2)
+
+	for i := range len(tpTestTypes) {
+		values := getDefaultForTpTests(tpTestTypes[i], tpTestCategories[i], tpName)
+		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
+						TMProfileName)
+						VALUES (?,?,?,?,?,?,?,?,?)`
+		_, err := tx.Exec(query, configName, tpTestTypes[i], tpTestCategories[i], values[0], values[1], values[2], values[4], values[3],
+			values[6])
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert Tp Tests",
+				OK:      false,
+			}
+		}
+	}
+
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+
+}
+
+func getDefaultForRxTests(testType string, testCategory sql.NullString, rxName string) []sql.NullString {
+	var ulSpectrum sql.NullString
+	var dlSpectrum sql.NullString
+	var power sql.NullString
+	var obwPower sql.NullString
+	var loopStress sql.NullString
+	var device sql.NullString
+	var tm sql.NullString
+	dlSpectrum.Valid = false
+	obwPower.Valid = false
+
+	device.Valid = true
+	device.String = "Default"
+	ulSpectrum.Valid = true
+	ulSpectrum.String = rxName + "-Uplink"
+	tm.Valid = true
+	tm.String = rxName + "-TM"
+
+	var values = make([]sql.NullString, 0)
+	if strings.EqualFold(testType, "RFUplink") {
+		power.Valid = true
+		power.String = "RxNominal"
+		loopStress.Valid = false
+	}
+	if strings.EqualFold(testType, "CommandDynamic") {
+		power.Valid = true
+		power.String = "CommandThreshold"
+		loopStress.Valid = false
+	}
+	if strings.EqualFold(testCategory.String, "VerifyDoppler") {
+		power.Valid = true
+		power.String = "DopplerProfile"
+		loopStress.Valid = true
+		loopStress.String = "Doppler-CDMA"
+	}
+	if strings.EqualFold(testType, "LockDynamic") {
+		power.Valid = true
+		power.String = "LockThreshold"
+		loopStress.Valid = false
+	}
+	if strings.EqualFold(testType, "LoopStress") {
+		power.Valid = true
+		power.String = "Frequency"
+		loopStress.Valid = true
+		if testCategory.String == "Extreme" {
+			loopStress.String = "Frequency-Extreme"
+		} else if testCategory.String == "Normal" {
+			loopStress.String = "Frequency-Normal"
+		}
+	}
+	if strings.EqualFold(testType, "CarrierAcquisition") {
+		power.Valid = true
+		power.String = "Frequency"
+		loopStress.Valid = true
+		if testCategory.String == "Extreme" {
+			loopStress.String = "Frequency-Extreme"
+		} else if testCategory.String == "Normal" {
+			loopStress.String = "Frequency-Normal"
+		}
+
+	}
+
+	values = append(values, ulSpectrum, dlSpectrum, power, obwPower, loopStress, device, tm)
+	return values
+}
+
+func getDefaultForTxTests(testType string, testCategory sql.NullString, txName string) []sql.NullString {
+	var ulSpectrum sql.NullString
+	var dlSpectrum sql.NullString
+	var power sql.NullString
+	var obwPower sql.NullString
+	var loopStress sql.NullString
+	var device sql.NullString
+	var tm sql.NullString
+	ulSpectrum.Valid = false
+	loopStress.Valid = false
+
+	device.Valid = true
+	device.String = "Default"
+	dlSpectrum.Valid = true
+	dlSpectrum.String = txName + "-Downlink"
+	tm.Valid = true
+	tm.String = txName + "-TM"
+
+	var values = make([]sql.NullString, 0)
+	if strings.EqualFold(testType, "PowerMeasurement") {
+		obwPower.Valid = true
+		obwPower.String = "TxProfile"
+	}
+	if strings.EqualFold(testType, "SpuriousMeasurement") {
+		dlSpectrum.Valid = true
+		dlSpectrum.String = txName + "-" + testCategory.String
+	}
+
+	values = append(values, ulSpectrum, dlSpectrum, power, obwPower, loopStress, device, tm)
+	return values
+}
+
+func getDefaultForTpTests(testType string, _ sql.NullString, tpName string) []sql.NullString {
+	var ulSpectrum sql.NullString
+	var dlSpectrum sql.NullString
+	var power sql.NullString
+	var obwPower sql.NullString
+	var loopStress sql.NullString
+	var device sql.NullString
+	var tm sql.NullString
+
+	obwPower.Valid = false
+
+	device.Valid = true
+	device.String = "Default"
+	ulSpectrum.Valid = true
+	ulSpectrum.String = tpName + "-Uplink"
+	dlSpectrum.Valid = true
+	dlSpectrum.String = tpName + "-Downlink"
+	tm.Valid = true
+	tm.String = tpName + "-TM"
+	if strings.EqualFold(testType, "Ranging") {
+		power.Valid = true
+		power.String = "Ranging"
+	} else {
+		power.Valid = true
+		power.String = "RxNominal"
+	}
+
+	var values = make([]sql.NullString, 0)
+	values = append(values, ulSpectrum, dlSpectrum, power, obwPower, loopStress, device, tm)
+	return values
+}
+
+func getDefaultRxSpecs(modulation string) []sql.NullFloat64 {
+	var maxPower sql.NullFloat64
+	var lock sql.NullFloat64
+	var cmd sql.NullFloat64
+	var sweepRate sql.NullFloat64
+	var sweepRange sql.NullFloat64
+	var carAcqOffset sql.NullFloat64
+	var lsUpper sql.NullFloat64
+	var lsLower sql.NullFloat64
+	var tcSubcarr sql.NullFloat64
+	var tcMI sql.NullFloat64
+	var freqDev sql.NullFloat64
+	maxPower.Float64 = -65
+	maxPower.Valid = true
+	cmd.Float64 = -105
+	cmd.Valid = true
+	lock.Float64 = -105
+	lock.Valid = true
+	tcSubcarr.Float64 = 8000
+	tcSubcarr.Valid = true
+
+	if modulation == "FM" {
+		carAcqOffset.Float64 = 125000
+		carAcqOffset.Valid = true
+		freqDev.Float64 = 200000
+		freqDev.Valid = true
+	} else if modulation == "PM" {
+		sweepRate.Float64 = 32000
+		sweepRate.Valid = true
+		sweepRange.Float64 = 125000
+		sweepRange.Valid = true
+		lsUpper.Float64 = 125000
+		lsUpper.Valid = true
+		lsLower.Float64 = -125000
+		lsLower.Valid = true
+		tcMI.Float64 = 1
+		tcMI.Valid = true
+	} else {
+		carAcqOffset.Float64 = 125000
+		carAcqOffset.Valid = true
+	}
+	var tbr = make([]sql.NullFloat64, 0)
+	tbr = append(tbr, maxPower, lock, cmd, sweepRate, sweepRange, carAcqOffset, lsUpper, lsLower)
+	tbr = append(tbr, tcSubcarr, tcMI, freqDev)
+	return tbr
+}
+
+func getSampleRxTM(rxName string) []string {
+	var mnemonics = make([]string, 0)
+	mnemonics = append(mnemonics, rxName+"-LockStatus", "LOCK", rxName+"-BSLock", "LOCK", rxName+"-AGC", rxName+"-CC", rxName+"-LoopStress")
+	return mnemonics
+}
+
+func getSampleSpectrumSettings() []float64 {
+	var specs = make([]float64, 0)
+	var span float64 = 500000
+	specs = append(specs, span, 10000, 3000)
+	return specs
+}
+
+func getDefaultTxSpecs(modulation string, freq float64) ([]sql.NullFloat64, []sql.NullInt32, string, int32) {
+
+	var spurious sql.NullFloat64
+	var harmonics sql.NullFloat64
+	var allowedFreqDev sql.NullFloat64
+	var allowedPowerDev sql.NullFloat64
+	var noOfSubCarr sql.NullInt32
+	var noOfHarms sql.NullInt32
+	var noOfSubHarmms sql.NullInt32
+	var isBurst string
+	var burstTime int32
+
+	spurious.Float64 = -50
+	spurious.Valid = true
+	harmonics.Float64 = -30
+	harmonics.Valid = true
+	allowedFreqDev.Float64 = (freq * 2e-6)
+	allowedFreqDev.Valid = true
+	allowedPowerDev.Float64 = 0.5
+	allowedPowerDev.Valid = true
+	noOfSubCarr.Int32 = 0
+	noOfSubCarr.Valid = true
+	noOfHarms.Int32 = 2
+	noOfHarms.Valid = true
+	noOfSubHarmms.Int32 = 0
+	noOfSubHarmms.Valid = true
+	isBurst = "No"
+	burstTime = 0
+
+	if modulation == "PM" {
+		noOfSubCarr.Int32 = 2
+
+	} else if modulation == "FSK" {
+		noOfSubCarr.Int32 = 1
+	} else {
+		noOfSubCarr.Int32 = 0
+	}
+	var tbr1 = make([]sql.NullFloat64, 0)
+	tbr1 = append(tbr1, spurious, harmonics, allowedFreqDev, allowedPowerDev)
+	var tbr2 = make([]sql.NullInt32, 0)
+	tbr2 = append(tbr2, noOfSubCarr, noOfHarms, noOfSubHarmms)
+	return tbr1, tbr2, isBurst, burstTime
+}
+
+func getDefaultConfigs(configType string) ([]sql.NullString, sql.NullInt32) {
+	var tsmCfgName sql.NullString
+	var linkedCfgs sql.NullString
+	var cortexIFM sql.NullString
+	var pmChannel sql.NullString
+	var progAttnUsed sql.NullString
+	var intFreq sql.NullInt32
+
+	linkedCfgs.Valid = false
+	if strings.EqualFold(configType, "Rx") {
+		tsmCfgName.String = "Rx-Sample"
+		tsmCfgName.Valid = true
+		cortexIFM.String = "1"
+		cortexIFM.Valid = true
+		progAttnUsed.String = "Yes"
+		progAttnUsed.Valid = true
+		intFreq.Int32 = 70e6
+		intFreq.Valid = true
+
+	} else if strings.EqualFold(configType, "Tx") {
+		tsmCfgName.String = "Tx-Sample"
+		tsmCfgName.Valid = true
+		pmChannel.String = "A"
+		pmChannel.Valid = true
+	} else {
+		tsmCfgName.String = "Tp-Sample"
+		tsmCfgName.Valid = true
+		cortexIFM.String = "1"
+		cortexIFM.Valid = true
+		progAttnUsed.String = "Yes"
+		progAttnUsed.Valid = true
+		intFreq.Int32 = 70e6
+		intFreq.Valid = true
+		pmChannel.String = "A"
+		pmChannel.Valid = true
+	}
+
+	var tbr = make([]sql.NullString, 0)
+	tbr = append(tbr, tsmCfgName, linkedCfgs, cortexIFM, pmChannel, progAttnUsed)
+
+	return tbr, intFreq
+}
