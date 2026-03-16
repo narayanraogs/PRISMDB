@@ -7,7 +7,7 @@ CREATE TABLE "Configurations" (
     "TpName"                TEXT ,
     "PayloadName"           TEXT ,
     "TSMConfigurationName"  TEXT  NOT NULL,
-    "CortexIFM"             INTEGER,
+    "CortexIFM"             TEXT,
     "IntermediateFrequency" INTEGER,
     "ProgrammableAttnUsed"  TEXT ,
     "DeviceProfileName"     TEXT  NOT NULL
@@ -327,23 +327,15 @@ INSERT INTO "Devices" ("ID", "DeviceName", "DeviceMake", "DeviceType", "IPAddres
 INSERT INTO "Devices" ("ID", "DeviceName", "DeviceMake", "DeviceType", "IPAddress", "ControlPort", "AlternateControlPort", "ReadPort", "DopplerPort", "TimeoutInMillisecs") VALUES (3,'Cortex-Main','Cortex','GTx','172.20.x.17',3001,3000,0,0,5000);
 INSERT INTO "Devices" ("ID", "DeviceName", "DeviceMake", "DeviceType", "IPAddress", "ControlPort", "AlternateControlPort", "ReadPort", "DopplerPort", "TimeoutInMillisecs") VALUES (4,'SpectrumAnalyzer','N9030B','SA','172.20.x.60',5025,0,0,0,5000);
 INSERT INTO "Devices" ("ID", "DeviceName", "DeviceMake", "DeviceType", "IPAddress", "ControlPort", "AlternateControlPort", "ReadPort", "DopplerPort", "TimeoutInMillisecs") VALUES (5,'PowerMeter','ML2488B','PM','172.20.x.58',5025,0,0,0,5000);
-INSERT INTO "DeviceProfile" ("ID", "DeviceProfileName", "SAName", "VSAName", "PMName", "PPMName", "TSMName", "GTxName", "SGName", "VSGName") VALUES (1,'Default','4','1','5','2','3',NULL,NULL,NULL);
+INSERT INTO "DeviceProfile" ("ID", "DeviceProfileName", "SAName", "VSAName", "PMName", "PPMName", "TSMName", "GTxName", "SGName", "VSGName") VALUES (1,'Default','SpectrumAnalyzer',NULL,'PowerMeter',NULL,'SDU&TSM','Cortex-Main','SignalGenerator',NULL);
 INSERT INTO "FrequencyProfile" ("ID", "Name", "MaxFrequency", "StepSize", "CommandingRequired", "DopplerFile") VALUES (1,'CarrierAcq-Extreme',125000.0,125000.0,'Yes',NULL);
 INSERT INTO "FrequencyProfile" ("ID", "Name", "MaxFrequency", "StepSize", "CommandingRequired", "DopplerFile") VALUES (2,'CarrierAcq-Normal',125000.0,25000.0,'Yes',NULL);
 INSERT INTO "FrequencyProfile" ("ID", "Name", "MaxFrequency", "StepSize", "CommandingRequired", "DopplerFile") VALUES (3,'LoopStress-Extreme',125000.0,125000.0,'No',NULL);
 INSERT INTO "FrequencyProfile" ("ID", "Name", "MaxFrequency", "StepSize", "CommandingRequired", "DopplerFile") VALUES (4,'LoopStress-Normal',125000.0,25000.0,'No',NULL);
-INSERT INTO "PowerProfile" ("ID", "Name", "PowerLevels", "NoOfCommandsAtThreshold", "NoOfCommandsAtOtherLevels") VALUES (1,'LockThreshold','-75,-80,-90', 20, 20);
-INSERT INTO "PowerProfile" ("ID", "Name", "PowerLevels", "NoOfCommandsAtThreshold", "NoOfCommandsAtOtherLevels") VALUES (2,'CommandThreshold','-75,-80,-90', 20, 20);
-INSERT INTO "PowerProfile" ("ID", "Name", "PowerLevels", "NoOfCommandsAtThreshold", "NoOfCommandsAtOtherLevels") VALUES (3,'RxNominal','-85', 20, 20);
-INSERT INTO "PowerProfile" ("ID", "Name", "PowerLevels", "NoOfCommandsAtThreshold", "NoOfCommandsAtOtherLevels") VALUES (4,'CarrierAcquisition','-85', 20, 20);
+INSERT INTO "PowerProfile" ("ID", "Name", "PowerLevels", "NoOfCommandsAtThreshold", "NoOfCommandsAtOtherLevels") VALUES (1,'RxNominal','-85', 20, 20);
+INSERT INTO "PowerProfile" ("ID", "Name", "PowerLevels", "NoOfCommandsAtThreshold", "NoOfCommandsAtOtherLevels") VALUES (2,'CarrierAcquisition','-85', 20, 20);
 INSERT INTO "TMProfile" ("ID", "Name", "PreRequisiteTM", "LogTM") VALUES (1,'Tx-1','TTC-Tx1-On-Sts = ON,TTC-Tx1-Temp,TTC-Tx2-On-Sts = ON,TTC-Tx2-Temp','');
 INSERT INTO "TSMConfigurations" VALUES (10,'Tx-Sample',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
 INSERT INTO "TSMConfigurations" VALUES (20,'Rx-Sample',NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL);
-INSERT INTO "TestPhases" VALUES (1,'PreT&E','2025-JAN-01','09:00:00',1);
-INSERT INTO "UpDownConverter" VALUES (1,'S-Band_U/C_Main',70000000.0,2028000000.0,-20,-60,0,0);
-INSERT INTO "UpDownConverter" VALUES (2,'S-Band_U/C_Redt',70000000.0,2028000000.0,-20,-60,0,0);
-INSERT INTO "UpDownConverter" VALUES (3,'S-Band_D/C_Main',2251000000.0,70000000.0,-20,-60,-50,-90);
-INSERT INTO "UpDownConverter" VALUES (4,'S-Band_D/C_Redt',2251000000.0,70000000.0,-20,-60,-50,-90);
-INSERT INTO "UpDownConverter" VALUES (5,'X-Band_D/C_Main',8125000000.0,720000000.0,-20,-60,-50,-90);
-INSERT INTO "UpDownConverter" VALUES (6,'X-Band_D/C_Redt',8125000000.0,720000000.0,-20,-60,-50,-90);
+
 

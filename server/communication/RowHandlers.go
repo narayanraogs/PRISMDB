@@ -296,9 +296,9 @@ func handleGetConfigurations(q *database.Queries, ctx context.Context, req utils
 	resp.Values = append(resp.Values, NullToString(row.TpName))
 	resp.Values = append(resp.Values, row.TSMConfigurationName)
 	if row.CortexIFM.Valid {
-		resp.Values = append(resp.Values, fmt.Sprintf("%v", row.CortexIFM.Int64))
+		resp.Values = append(resp.Values, row.CortexIFM.String)
 	} else {
-		resp.Values = append(resp.Values, "1")
+		resp.Values = append(resp.Values, "A")
 	}
 	if row.IntermediateFrequency.Valid {
 		resp.Values = append(resp.Values, fmt.Sprintf("%v", row.IntermediateFrequency.Int64))

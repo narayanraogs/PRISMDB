@@ -112,7 +112,14 @@ func autoPopulateIndependentTables(db *sql.DB) utils.Ack {
 			OK:      false,
 		}
 	}
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("Commit failed in autoPopulateIndependentTables:", err)
+		return utils.Ack{
+			Message: "Unable to commit transaction for Independent Tables",
+			OK:      false,
+		}
+	}
 	return utils.Ack{
 		Message: "",
 		OK:      true,
@@ -129,16 +136,15 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	}
 	//SpecRX
 	values := getDefaultRxSpecs(modulation)
+	var codeRate sql.NullFloat64
+	if modulation == "CDMA" {
+		codeRate.Valid = true
+		codeRate.Float64 = 3069000
+	}
 	query := `INSERT INTO SpecRx 
-<<<<<<< HEAD
-	(RxName, Frequency, MaxPower, TCSubCarrierFrequency, ModulationScheme, AcquisitionOffset, SweepRange, SweepRate, TCModIndex, FrequencyDeviationFM)
-	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err = tx.Exec(query, rxName, freq, values[0], values[8], modulation, values[5], values[4], values[3], values[9], values[10])
-=======
-	(RxName, Frequency, MaxPower, TCSubCarrierFrequency, ModulationScheme, AcquisitionOffset, SweepRange, SweepRate, TCModIndex, FrequencyDeviationFM, CodeRateinMcps)
+	(RxName, Frequency, MaxPower, TCSubCarrierFrequency, ModulationScheme, AcquisitionOffset, SweepRange, SweepRate, TCModIndex, FrequencyDeviationFM, CodeRateInMcps)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err = tx.Exec(query, rxName, freq, values[0], values[1], modulation, values[2], values[3], values[4], values[5], values[6])
->>>>>>> 310a3ff (AutoPopulate server modified)
+	_, err = tx.Exec(query, rxName, freq, values[0], values[8], modulation, values[5], values[4], values[3], values[9], values[10], codeRate)
 	if err != nil {
 		fmt.Println(err)
 		tx.Rollback()
@@ -148,20 +154,16 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 		}
 	}
 	//SpecRxTMTC
-<<<<<<< HEAD
-	tmValues := getSampleRxTM(rxName)
-=======
 	tmValues := getSampleRxTMTC(rxName)
->>>>>>> 310a3ff (AutoPopulate server modified)
 	query = `INSERT INTO SpecRxTMTC 
 	(RxName, LockStatusMnemonic, LockStatusValue, BSLockStatusMnemonic, BSLockStatusValue, AGCMnemonic, LoopStressMnemonic, CommandCounterMnemonic, TestCommandSet, TestCommandReset)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-	_, err = tx.Exec(query, rxName, tmValues[0], tmValues[1], tmValues[2], tmValues[3], tmValues[4], tmValues[6], tmValues[5], "SET", "RESET")
+	_, err = tx.Exec(query, rxName, tmValues[0], tmValues[1], tmValues[2], tmValues[3], tmValues[4], tmValues[5], tmValues[6], tmValues[7], tmValues[8])
 	if err != nil {
 		fmt.Println(err)
 		tx.Rollback()
 		return utils.Ack{
-			Message: "Unable to insert in SpecRxTM Table",
+			Message: "Unable to insert in SpecRxTMTC Table",
 			OK:      false,
 		}
 	}
@@ -181,11 +183,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	// Frequency Profile for CDMA Doppler Test
 	if modulation == "CDMA" {
 		query := `INSERT INTO FrequencyProfile(Name, MaxFrequency,StepSize,CommandingRequired,DopplerFile)VALUES (?,?,?,?,?)`
-<<<<<<< HEAD
 		_, err = tx.Exec(query, "Doppler-CDMA", 125000.0, 25000.0, "Yes", "/umacs/umacsops/sarc/resources/doppler.csv")
-=======
-		_, err = tx.Exec(query, "Doppler-CDMA", 125000.0, 25000.0, "Yes", "/umacs/umacsops/prism/resources/doppler.csv")
->>>>>>> 310a3ff (AutoPopulate server modified)
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -198,13 +196,8 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 
 	// Test Specific Profile for receiver in PowerProfile Table
 	if modulation == "FM" || modulation == "PSK" || modulation == "FSK" {
-<<<<<<< HEAD
 		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err = tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
-=======
-		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfcommandsAtOtherLevels)VALUES (?,?,?,?)`
-		_, err = tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", "100", "10")
->>>>>>> 310a3ff (AutoPopulate server modified)
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -214,15 +207,9 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 			}
 		}
 	} else if modulation == "PM" {
-<<<<<<< HEAD
 		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err1 := tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
 		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
-=======
-		query := `INSERT INTO PowerProfile(PowerProfileName, PowerLevels, NoOfCommandsAtThreshold, NoOfcommandsAtOtherLevels)VALUES (?,?,?,?)`
-		_, err1 := tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", "100", "10")
-		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", "0", "0")
->>>>>>> 310a3ff (AutoPopulate server modified)
 		if err1 != nil || err2 != nil {
 			tx.Rollback()
 			return utils.Ack{
@@ -231,15 +218,9 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 			}
 		}
 	} else if modulation == "CDMA" {
-<<<<<<< HEAD
 		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err = tx.Exec(query, "DopplerProfile", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
 		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
-=======
-		query := `INSERT INTO PowerProfile(PowerProfileName, PowerLevels, NoOfCommandsAtThreshold, NoOfcommandsAtOtherLevels)VALUES (?,?,?,?)`
-		_, err = tx.Exec(query, "DopplerProfile", "-75,-80,-90,-95,-100,-105,-110", "100", "10")
-		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", "0", "0")
->>>>>>> 310a3ff (AutoPopulate server modified)
 		if err != nil || err2 != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -283,7 +264,14 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 		}
 	}
 
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("Commit failed in autoPopulateRxRelated:", err)
+		return utils.Ack{
+			Message: "Unable to commit transaction for Rx Related",
+			OK:      false,
+		}
+	}
 	return utils.Ack{
 		Message: "",
 		OK:      true,
@@ -292,13 +280,9 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 }
 
 func getRxTM(rxName string) (string, string) {
-<<<<<<< HEAD
 	lockMnenonic := rxName + "-Lock-Sts"
-=======
-	lockMnenonic := "TM1:" + rxName + "-Lock-Sts"
->>>>>>> 310a3ff (AutoPopulate server modified)
 	tempMnemonic := rxName + "-Tmp"
-	pre := lockMnenonic + "," + tempMnemonic
+	pre := "TM1:" + lockMnenonic + ",TM2:" + tempMnemonic
 	post := pre
 	return pre, post
 }
@@ -458,7 +442,14 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 			OK:      false,
 		}
 	}
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("Commit failed in autoPopulateTxRelated:", err)
+		return utils.Ack{
+			Message: "Unable to commit transaction for Tx Related",
+			OK:      false,
+		}
+	}
 	return utils.Ack{
 		Message: "",
 		OK:      true,
@@ -467,14 +458,9 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 }
 
 func getTxTM(txName string) (string, string) {
-<<<<<<< HEAD
 	onMnenonic := txName + "-On-Sts"
 	tempMnemonic := txName + "-Tmp"
-=======
-	onMnenonic := "TM1:" + txName + "-On-Sts"
-	tempMnemonic := "TM1:" + txName + "-Tmp"
->>>>>>> 310a3ff (AutoPopulate server modified)
-	pre := onMnenonic + "," + tempMnemonic
+	pre := "TM1:" + onMnenonic + ",TM2:" + tempMnemonic
 	post := pre
 	return pre, post
 }
@@ -612,7 +598,14 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 		}
 	}
 
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("Commit failed in autoPopulateTPRelated:", err)
+		return utils.Ack{
+			Message: "Unable to commit transaction for Tp Related",
+			OK:      false,
+		}
+	}
 	return utils.Ack{
 		Message: "",
 		OK:      true,
@@ -620,7 +613,6 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 }
 
 func autoPopulatePLRelated(db *sql.DB, plName string) utils.Ack {
-<<<<<<< HEAD
 	tx, err := db.Begin()
 	if err != nil {
 		fmt.Println(err)
@@ -651,21 +643,46 @@ func autoPopulatePLRelated(db *sql.DB, plName string) utils.Ack {
 		}
 	}
 
-	tx.Commit()
+	// PulseProfile for payload
+	pulseQuery := `INSERT INTO PulseProfile(Name, TransientON, IQOn, AcquisitionTime, SweepTime, SweepCount,
+		FilterType, FilterBandwidth, YTop, ThresholdLevel, Hysterisis, PPMTriggerLevel, PPMReferenceLevel, PPMYDivision, PPMChannel)
+		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+	_, err = tx.Exec(pulseQuery, plName+"-Pulse", 0.5, 0, 100, 0.01, 10,
+		"Gaussian", 1000000.0, -20.0, -40.0, 3.0, -30.0, -20.0, 10.0, "A")
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			OK:      false,
+			Message: "Unable to insert in PulseProfile Table: " + err.Error(),
+		}
+	}
+
+	// TRMProfile for payload
+	trmQuery := `INSERT INTO TRMProfile(Name, NoOfTRMs, TimePerTRMInSecs, DelayBeforeFirstReadInSecs)
+		VALUES (?,?,?,?)`
+	_, err = tx.Exec(trmQuery, plName+"-TRM", 5, 10.0, 2.0)
+	if err != nil {
+		fmt.Println(err)
+		tx.Rollback()
+		return utils.Ack{
+			OK:      false,
+			Message: "Unable to insert in TRMProfile Table: " + err.Error(),
+		}
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("Commit failed in autoPopulatePLRelated:", err)
+		return utils.Ack{
+			Message: "Unable to commit transaction for PL Related",
+			OK:      false,
+		}
+	}
 
 	return utils.Ack{
 		OK:      true,
 		Message: "Payload Successfully Populated",
-=======
-	// PL names are registered as PayloadName in the Configurations table.
-	// SpecPL rows are created per PL-type configuration (keyed by ConfigName),
-	// so they are inserted in autoPopulateConfigurations when configType is "PL".
-	// Nothing else to do here for a PL name.
-	fmt.Println("PL Name registered:", plName)
-	return utils.Ack{
-		OK:      true,
-		Message: "Payload Successfully Registered",
->>>>>>> 310a3ff (AutoPopulate server modified)
 	}
 }
 
@@ -723,44 +740,37 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 		}
 	}
 
-<<<<<<< HEAD
-=======
-	//SpecPL for Payload configuration
-	if strings.EqualFold(configType, "PL") {
-		query = `INSERT INTO SpecPL (ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, PulsePeriod, PulseWidth)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`
-		_, err = tx.Exec(query, configName, "Normal", 1.0, 2e9, -20.0, 1e-3, 1e-6)
-		if err != nil {
-			fmt.Println(err)
-			tx.Rollback()
-			return utils.Ack{
-				Message: "Unable to insert in SpecPL Table",
-				OK:      false,
-			}
-		}
+	ack := populateTests(tx, configType, configName, rxName, txName, tpName)
+	if !ack.OK {
+		fmt.Println("populateTests failed:", ack.Message)
+		return ack
 	}
 
->>>>>>> 310a3ff (AutoPopulate server modified)
-	populateTests(tx, configType, configName, rxName, txName, tpName)
-
-	tx.Commit()
+	err = tx.Commit()
+	if err != nil {
+		fmt.Println("Commit failed in autoPopulateConfigurations:", err)
+		return utils.Ack{
+			Message: "Unable to commit transaction for Configurations",
+			OK:      false,
+		}
+	}
 	return utils.Ack{
 		Message: "",
 		OK:      true,
 	}
-
 }
 
-func populateTests(tx *sql.Tx, configType string, configName string, rxName string, txName string, tpName string) {
+func populateTests(tx *sql.Tx, configType string, configName string, rxName string, txName string, tpName string) utils.Ack {
 	if strings.EqualFold(configType, "Tp") {
-		populateTpTestsForConfig(tx, configName, tpName)
+		return populateTpTestsForConfig(tx, configName, tpName)
 	}
 	if strings.EqualFold(configType, "Tx") {
-		populateTxTestsForConfig(tx, configName, txName)
+		return populateTxTestsForConfig(tx, configName, txName)
 	}
 	if strings.EqualFold(configType, "Rx") {
-		populateRxTestsForConfig(tx, configName, rxName)
+		return populateRxTestsForConfig(tx, configName, rxName)
 	}
+	return utils.Ack{OK: true}
 }
 
 func populateRxTestsForConfig(tx *sql.Tx, configName string, rxName string) utils.Ack {
@@ -781,7 +791,8 @@ func populateRxTestsForConfig(tx *sql.Tx, configName string, rxName string) util
 	}
 	rows.Close()
 	var null sql.NullString
-	null.Valid = false
+	null.Valid = true
+	null.String = "Default"
 	var normal sql.NullString
 	normal.Valid = true
 	normal.String = "Normal"
@@ -810,21 +821,12 @@ func populateRxTestsForConfig(tx *sql.Tx, configName string, rxName string) util
 
 	for i := range len(rxTestTypes) {
 		values := getDefaultForRxTests(rxTestTypes[i], rxTestCategories[i], rxName)
-<<<<<<< HEAD
 		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 					DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
 					TMProfileName )
 					VALUES (?,?,?,?,?,?,?,?,?)`
 		_, err := tx.Exec(query, configName, rxTestTypes[i], rxTestCategories[i], values[0], values[1], values[2], values[4], values[3],
 			values[6])
-=======
-		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULSpectrumProfileName,
-					DLSpectrumProfileName, PowerProfileName, OBWPowerProfileName, LoopStressProfileName,
-					DeviceProfileName, TMProfileName )
-					VALUES (?,?,?,?,?,?,?,?,?,?)`
-		_, err := tx.Exec(query, configName, rxTestTypes[i], rxTestCategories[i], values[0], values[1], values[2], values[3], values[4],
-			values[5], values[6])
->>>>>>> 310a3ff (AutoPopulate server modified)
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -860,7 +862,8 @@ func populateTxTestsForConfig(tx *sql.Tx, configName string, txName string) util
 	}
 	rows.Close()
 	var null sql.NullString
-	null.Valid = false
+	null.Valid = true
+	null.String = "Default"
 
 	var power sql.NullString
 	var harm sql.NullString
@@ -896,21 +899,12 @@ func populateTxTestsForConfig(tx *sql.Tx, configName string, txName string) util
 
 	for i := range len(txTestTypes) {
 		values := getDefaultForTxTests(txTestTypes[i], txTestCategories[i], txName)
-<<<<<<< HEAD
 		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
 						TMProfileName )
 						VALUES (?,?,?,?,?,?,?,?,?)`
 		_, err := tx.Exec(query, configName, txTestTypes[i], txTestCategories[i], values[0], values[1], values[2], values[4], values[3],
 			values[6])
-=======
-		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULSpectrumProfileName,
-						DLSpectrumProfileName, PowerProfileName, OBWPowerProfileName, LoopStressProfileName,
-						DeviceProfileName, TMProfileName )
-						VALUES (?,?,?,?,?,?,?,?,?,?)`
-		_, err := tx.Exec(query, configName, txTestTypes[i], txTestCategories[i], values[0], values[1], values[2], values[3], values[4],
-			values[5], values[6])
->>>>>>> 310a3ff (AutoPopulate server modified)
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -947,21 +941,12 @@ func populateTpTestsForConfig(tx *sql.Tx, configName string, tpName string) util
 
 	for i := range len(tpTestTypes) {
 		values := getDefaultForTpTests(tpTestTypes[i], tpTestCategories[i], tpName)
-<<<<<<< HEAD
 		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
 						TMProfileName)
 						VALUES (?,?,?,?,?,?,?,?,?)`
 		_, err := tx.Exec(query, configName, tpTestTypes[i], tpTestCategories[i], values[0], values[1], values[2], values[4], values[3],
 			values[6])
-=======
-		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULSpectrumProfileName,
-						DLSpectrumProfileName, PowerProfileName, OBWPowerProfileName, LoopStressProfileName,
-						DeviceProfileName, TMProfileName)
-						VALUES (?,?,?,?,?,?,?,?,?,?)`
-		_, err := tx.Exec(query, configName, tpTestTypes[i], tpTestCategories[i], values[0], values[1], values[2], values[3], values[4],
-			values[5], values[6])
->>>>>>> 310a3ff (AutoPopulate server modified)
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -1111,7 +1096,6 @@ func getDefaultForTpTests(testType string, _ sql.NullString, tpName string) []sq
 
 func getDefaultRxSpecs(modulation string) []sql.NullFloat64 {
 	var maxPower sql.NullFloat64
-<<<<<<< HEAD
 	var lock sql.NullFloat64
 	var cmd sql.NullFloat64
 	var sweepRate sql.NullFloat64
@@ -1128,28 +1112,12 @@ func getDefaultRxSpecs(modulation string) []sql.NullFloat64 {
 	cmd.Valid = true
 	lock.Float64 = -105
 	lock.Valid = true
-=======
-	var tcSubcarr sql.NullFloat64
-	var acqOffset sql.NullFloat64
-	var sweepRange sql.NullFloat64
-	var sweepRate sql.NullFloat64
-	var tcMI sql.NullFloat64
-	var freqDev sql.NullFloat64
-	var codeRate sql.NullFloat64
-	maxPower.Float64 = -65
-	maxPower.Valid = true
->>>>>>> 310a3ff (AutoPopulate server modified)
 	tcSubcarr.Float64 = 8000
 	tcSubcarr.Valid = true
 
 	if modulation == "FM" {
-<<<<<<< HEAD
 		carAcqOffset.Float64 = 125000
 		carAcqOffset.Valid = true
-=======
-		acqOffset.Float64 = 125000
-		acqOffset.Valid = true
->>>>>>> 310a3ff (AutoPopulate server modified)
 		freqDev.Float64 = 200000
 		freqDev.Valid = true
 	} else if modulation == "PM" {
@@ -1157,7 +1125,6 @@ func getDefaultRxSpecs(modulation string) []sql.NullFloat64 {
 		sweepRate.Valid = true
 		sweepRange.Float64 = 125000
 		sweepRange.Valid = true
-<<<<<<< HEAD
 		lsUpper.Float64 = 125000
 		lsUpper.Valid = true
 		lsLower.Float64 = -125000
@@ -1174,30 +1141,9 @@ func getDefaultRxSpecs(modulation string) []sql.NullFloat64 {
 	return tbr
 }
 
-func getSampleRxTM(rxName string) []string {
-	var mnemonics = make([]string, 0)
-	mnemonics = append(mnemonics, rxName+"-LockStatus", "LOCK", rxName+"-BSLock", "LOCK", rxName+"-AGC", rxName+"-CC", rxName+"-LoopStress")
-=======
-		tcMI.Float64 = 1
-		tcMI.Valid = true
-	} else if modulation == "CDMA" {
-		codeRate.Float64 = 3069000
-		codeRate.Valid = true
-
-	} else {
-		acqOffset.Float64 = 125000
-		acqOffset.Valid = true
-	}
-	var tbr = make([]sql.NullFloat64, 0)
-	tbr = append(tbr, maxPower, tcSubcarr, acqOffset, sweepRate, sweepRange)
-	tbr = append(tbr, tcMI, freqDev, codeRate)
-	return tbr
-}
-
 func getSampleRxTMTC(rxName string) []string {
 	var mnemonics = make([]string, 0)
-	mnemonics = append(mnemonics, rxName+"-LockStatus", "LOCK", rxName+"-BSLock", "LOCK", rxName+"-AGC", rxName+"-LoopStress", rxName+"-CC", "L1TestCmdSet", "L1TestCmdRst")
->>>>>>> 310a3ff (AutoPopulate server modified)
+	mnemonics = append(mnemonics, rxName+"-LockStatus", "LOCK", rxName+"-BSLock", "LOCK", rxName+"-AGC", rxName+"-LoopStress", rxName+"-CC", "SET", "RESET")
 	return mnemonics
 }
 

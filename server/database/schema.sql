@@ -7,7 +7,7 @@ CREATE TABLE "Configurations" (
     "TpName"                TEXT ,
     "PayloadName"           TEXT ,
     "TSMConfigurationName"  TEXT  NOT NULL,
-    "CortexIFM"             INTEGER,
+    "CortexIFM"             TEXT,
     "IntermediateFrequency" INTEGER,
     "ProgrammableAttnUsed"  TEXT ,
     "DeviceProfileName"     TEXT  NOT NULL

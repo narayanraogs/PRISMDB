@@ -17,7 +17,7 @@ type Configuration struct {
 	TpName                sql.NullString
 	PayloadName           sql.NullString
 	TSMConfigurationName  string
-	CortexIFM             sql.NullInt64
+	CortexIFM             sql.NullString
 	IntermediateFrequency sql.NullInt64
 	ProgrammableAttnUsed  sql.NullString
 	DeviceProfileName     string

@@ -21,7 +21,9 @@ class Create extends StatefulWidget {
 class StateCreate extends State<Create> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController dbName = TextEditingController();
+  final TextEditingController dbName = TextEditingController(
+    text: '/home/csrspdev/prism/db/sample.db',
+  );
 
   final TextEditingController noOfRxController = TextEditingController(
     text: '0',
@@ -72,6 +74,16 @@ class StateCreate extends State<Create> {
     return null;
   }
 
+  String? _optionalIntegerValidator(String? value) {
+    if (value == null || value.isEmpty) return null; // empty is OK, treated as 0
+    try {
+      int.parse(value);
+    } catch (e) {
+      return "Value has to be an integer";
+    }
+    return null;
+  }
+
   String? _stringValidator(String? value) {
     if (value == null || value.isEmpty) return "Value cannot be empty";
     return null;
@@ -86,6 +98,19 @@ class StateCreate extends State<Create> {
       return "Value has to be a floating point number";
     }
     return null;
+  }
+
+  double _convertFrequencyToHz(double value, String unit) {
+    switch (unit) {
+      case 'kHz':
+        return value * 1e3;
+      case 'MHz':
+        return value * 1e6;
+      case 'GHz':
+        return value * 1e9;
+      default:
+        return value; // Hz
+    }
   }
 
   void _syncControllers<T>(
@@ -190,15 +215,17 @@ class StateCreate extends State<Create> {
     req.dbPath = dbName.text;
 
     req.rxNames = rxNames.map((e) => e.text).toList();
-    req.rxFrequencies = rxFreqs
-        .map((e) => double.tryParse(e.text) ?? 0.0)
-        .toList();
+    req.rxFrequencies = List.generate(rxFreqs.length, (i) {
+      double val = double.tryParse(rxFreqs[i].text) ?? 0.0;
+      return _convertFrequencyToHz(val, rxFreqUnits[i]);
+    });
     req.rxModulation = rxSelModulation;
 
     req.txNames = txNames.map((e) => e.text).toList();
-    req.txFrequencies = txFreqs
-        .map((e) => double.tryParse(e.text) ?? 0.0)
-        .toList();
+    req.txFrequencies = List.generate(txFreqs.length, (i) {
+      double val = double.tryParse(txFreqs[i].text) ?? 0.0;
+      return _convertFrequencyToHz(val, txFreqUnits[i]);
+    });
     req.txPowers = txPowers.map((e) => double.tryParse(e.text) ?? 0.0).toList();
     req.txModulation = txSelModulation;
 
@@ -260,6 +287,9 @@ class StateCreate extends State<Create> {
       }
       if (!tpNames.map((e) => e.text).contains(configTpNameSelected[i])) {
         configTpNameSelected[i] = "";
+      }
+      if (!plNames.map((e) => e.text).contains(configPlNameSelected[i])) {
+        configPlNameSelected[i] = "";
       }
     }
   }
@@ -334,6 +364,30 @@ class StateCreate extends State<Create> {
         decoration: _buildFlatInputDecoration(
           label,
         ).copyWith(prefixIcon: const Icon(Icons.numbers, size: 18)),
+      ),
+    );
+  }
+
+  Widget _buildOptionalCountField(
+    String label,
+    TextEditingController controller,
+    void Function() onChange,
+  ) {
+    return Container(
+      width: 150,
+      margin: const EdgeInsets.only(right: 16.0, bottom: 16.0),
+      child: TextFormField(
+        controller: controller,
+        validator: _optionalIntegerValidator,
+        onChanged: (val) {
+          onChange();
+        },
+        decoration: _buildFlatInputDecoration(
+          label,
+        ).copyWith(
+          prefixIcon: const Icon(Icons.numbers, size: 18),
+          hintText: "0",
+        ),
       ),
     );
   }
@@ -539,10 +593,10 @@ class StateCreate extends State<Create> {
                 ),
 
               // Transponders Section
-              _buildSectionHeader("Transponders (Tp)"),
+              _buildSectionHeader("Transponders (Tp) - Optional"),
               Row(
                 children: [
-                  _buildCountField(
+                  _buildOptionalCountField(
                     "Tp Count",
                     noOfTpController,
                     () => _syncControllers(
@@ -624,10 +678,10 @@ class StateCreate extends State<Create> {
                 ),
 
               // Payloads Section
-              _buildSectionHeader("Payloads (Pl)"),
+              _buildSectionHeader("Payloads (Pl) - Optional"),
               Row(
                 children: [
-                  _buildCountField(
+                  _buildOptionalCountField(
                     "Pl Count",
                     noOfPlController,
                     () => _syncControllers(
