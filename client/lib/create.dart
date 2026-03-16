@@ -140,12 +140,18 @@ class StateCreate extends State<Create> {
     );
   }
 
+  void removeRxAt(int index) {
+    rxNames.removeAt(index);
+    rxFreqs.removeAt(index);
+    rxFreqUnits.removeAt(index);
+    rxModulations.removeAt(index);
+    rxSelModulation.removeAt(index);
+    noOfRxController.text = rxNames.length.toString();
+    sanetizeConfigValues();
+  }
+
   void removeRxController() {
-    rxNames.removeLast();
-    rxFreqs.removeLast();
-    rxFreqUnits.removeLast();
-    rxModulations.removeLast();
-    rxSelModulation.removeLast();
+    removeRxAt(rxNames.length - 1);
   }
 
   void createNewTxController() {
@@ -160,13 +166,19 @@ class StateCreate extends State<Create> {
     );
   }
 
+  void removeTxAt(int index) {
+    txNames.removeAt(index);
+    txFreqs.removeAt(index);
+    txFreqUnits.removeAt(index);
+    txPowers.removeAt(index);
+    txModulations.removeAt(index);
+    txSelModulation.removeAt(index);
+    noOfTxController.text = txNames.length.toString();
+    sanetizeConfigValues();
+  }
+
   void removeTxController() {
-    txNames.removeLast();
-    txFreqs.removeLast();
-    txFreqUnits.removeLast();
-    txPowers.removeLast();
-    txModulations.removeLast();
-    txSelModulation.removeLast();
+    removeTxAt(txNames.length - 1);
   }
 
   void createNewTpController() {
@@ -175,18 +187,30 @@ class StateCreate extends State<Create> {
     tpTxNameSelected.add("");
   }
 
+  void removeTpAt(int index) {
+    tpNames.removeAt(index);
+    tpRxNameSelected.removeAt(index);
+    tpTxNameSelected.removeAt(index);
+    noOfTpController.text = tpNames.length.toString();
+    sanetizeConfigValues();
+  }
+
   void removeTpController() {
-    tpNames.removeLast();
-    tpRxNameSelected.removeLast();
-    tpTxNameSelected.removeLast();
+    removeTpAt(tpNames.length - 1);
   }
 
   void createNewPlController() {
     plNames.add(TextEditingController());
   }
 
+  void removePlAt(int index) {
+    plNames.removeAt(index);
+    noOfPlController.text = plNames.length.toString();
+    sanetizeConfigValues();
+  }
+
   void removePlController() {
-    plNames.removeLast();
+    removePlAt(plNames.length - 1);
   }
 
   void createNewConfigController() {
@@ -198,13 +222,17 @@ class StateCreate extends State<Create> {
     configPlNameSelected.add("");
   }
 
+  void removeConfigAt(int index) {
+    configNames.removeAt(index);
+    configTypes.removeAt(index);
+    configRxNameSelected.removeAt(index);
+    configTxNameSelected.removeAt(index);
+    configTpNameSelected.removeAt(index);
+    configPlNameSelected.removeAt(index);
+  }
+
   void removeConfigController() {
-    configNames.removeLast();
-    configTypes.removeLast();
-    configRxNameSelected.removeLast();
-    configTxNameSelected.removeLast();
-    configTpNameSelected.removeLast();
-    configPlNameSelected.removeLast();
+    removeConfigAt(configNames.length - 1);
   }
 
   void sendRequest() async {
@@ -455,9 +483,25 @@ class StateCreate extends State<Create> {
                       height: 350,
                       child: Column(
                         children: [
-                          Text(
-                            "Rx ${index + 1}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Rx ${index + 1}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    removeRxAt(index);
+                                  });
+                                },
+                                tooltip: "Delete Receiver",
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -532,9 +576,25 @@ class StateCreate extends State<Create> {
                       height: 400,
                       child: Column(
                         children: [
-                          Text(
-                            "Tx ${index + 1}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Tx ${index + 1}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    removeTxAt(index);
+                                  });
+                                },
+                                tooltip: "Delete Transmitter",
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -629,9 +689,25 @@ class StateCreate extends State<Create> {
                       height: 400,
                       child: Column(
                         children: [
-                          Text(
-                            "Tp ${index + 1}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Tp ${index + 1}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    removeTpAt(index);
+                                  });
+                                },
+                                tooltip: "Delete Transponder",
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -700,9 +776,25 @@ class StateCreate extends State<Create> {
                       height: 200,
                       child: Column(
                         children: [
-                          Text(
-                            "Pl ${index + 1}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Pl ${index + 1}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    removePlAt(index);
+                                  });
+                                },
+                                tooltip: "Delete Payload",
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -780,9 +872,25 @@ class StateCreate extends State<Create> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            "Config ${index + 1}",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                "Config ${index + 1}",
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  setState(() {
+                                    removeConfigAt(index);
+                                  });
+                                },
+                                tooltip: "Delete Configuration",
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 16),
                           Row(
