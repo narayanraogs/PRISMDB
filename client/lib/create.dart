@@ -6,8 +6,6 @@ import 'package:prism_db_editor/structures.dart';
 import 'package:prism_db_editor/variables.dart';
 import 'package:http/http.dart' as http;
 
-import 'helper_functions.dart';
-
 class Create extends StatefulWidget {
   final Global global;
   final VoidCallback callback;
@@ -20,6 +18,27 @@ class Create extends StatefulWidget {
 
 class StateCreate extends State<Create> {
   final _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
+
+  final GlobalKey _dbKey = GlobalKey();
+  final GlobalKey _rxKey = GlobalKey();
+  final GlobalKey _txKey = GlobalKey();
+  final GlobalKey _tpKey = GlobalKey();
+  final GlobalKey _plKey = GlobalKey();
+  final GlobalKey _configKey = GlobalKey();
+
+  int _selectedNavIndex = 0;
+
+  void _scrollToSection(GlobalKey key, int index) {
+    setState(() {
+      _selectedNavIndex = index;
+    });
+    Scrollable.ensureVisible(
+      key.currentContext!,
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeInOut,
+    );
+  }
 
   final TextEditingController dbName = TextEditingController(
     text: '/home/csrspdev/prism/db/sample.db',
@@ -360,10 +379,17 @@ class StateCreate extends State<Create> {
       margin: const EdgeInsets.all(8.0),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: Border.all(color: Colors.grey.shade300, width: 1.0),
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(16.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.shade100, width: 1.0),
       ),
-      child: Padding(padding: const EdgeInsets.all(12.0), child: child),
+      child: Padding(padding: const EdgeInsets.all(16.0), child: child),
     );
   }
 
@@ -425,16 +451,25 @@ class StateCreate extends State<Create> {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(String title, {IconData? icon}) {
     return Padding(
-      padding: const EdgeInsets.only(top: 32.0, bottom: 16.0, left: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 24,
-          fontWeight: FontWeight.w600,
-          color: Colors.grey.shade800,
-        ),
+      padding: const EdgeInsets.only(top: 40.0, bottom: 20.0, left: 8.0),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 28, color: const Color(0xFF3E2723)),
+            const SizedBox(width: 12),
+          ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF3E2723),
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -488,44 +523,143 @@ class StateCreate extends State<Create> {
   Widget build(BuildContext context) {
     sanetizeConfigValues();
 
-    return Form(
-      key: _formKey,
-      child: Container(
-        color: Colors.grey.shade50,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(32.0),
+    return Row(
+      children: [
+        // Sidebar Navigation
+        Container(
+          width: 240,
+          color: Colors.white,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Database Section
-              _buildSectionHeader("Database Configuration"),
-              _buildFlatCard(
-                width: 400,
-                height: 150,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
+                child: Row(
                   children: [
+                    Icon(Icons.auto_awesome, color: Colors.blue, size: 28),
+                    SizedBox(width: 12),
                     Text(
-                      "Database Path & Name",
+                      "Setup",
                       style: TextStyle(
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade700,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: dbName,
-                      validator: _stringValidator,
-                      decoration: _buildFlatInputDecoration(
-                        "e.g. ./mydatabase.db",
+                        color: Color(0xFF3E2723),
                       ),
                     ),
                   ],
                 ),
               ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 16,
+                    horizontal: 12,
+                  ),
+                  children: [
+                    _buildNavItem(0, Icons.storage, "Database", _dbKey),
+                    _buildNavItem(1, Icons.settings_input_antenna, "Receivers", _rxKey),
+                    _buildNavItem(2, Icons.sensors, "Transmitters", _txKey),
+                    _buildNavItem(3, Icons.swap_horiz, "Transponders", _tpKey),
+                    _buildNavItem(4, Icons.developer_board, "Payloads", _plKey),
+                    _buildNavItem(5, Icons.tune, "Configurations", _configKey),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.green.shade600,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onPressed: () {
+                      if (_formKey.currentState!.validate()) {
+                        sendRequest();
+                      }
+                    },
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text(
+                      "Initialize DB",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const VerticalDivider(width: 1),
+        // Main Content Area
+        Expanded(
+          child: Form(
+            key: _formKey,
+            child: Container(
+              color: const Color(0xFFF8FAFC),
+              child: SingleChildScrollView(
+                controller: _scrollController,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 48.0,
+                  vertical: 40.0,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Database Section
+                    Column(
+                      key: _dbKey,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(
+                          "Database Configuration",
+                          icon: Icons.storage_rounded,
+                        ),
+                        _buildFlatCard(
+                          width: double.infinity,
+                          height: null,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Database Path & Name",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: dbName,
+                                validator: _stringValidator,
+                                decoration: _buildFlatInputDecoration(
+                                  "e.g. ./mydatabase.db",
+                                ).copyWith(
+                                  prefixIcon: const Icon(
+                                    Icons.file_present_rounded,
+                                    size: 20,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
 
-              // Receivers Section
-              _buildSectionHeader("Receivers (Rx)"),
+                    // Receivers Section
+                    Column(
+                      key: _rxKey,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(
+                          "Receivers (Rx)",
+                          icon: Icons.settings_input_antenna,
+                        ),
               Row(
                 children: [
                   _buildCountField(
@@ -638,9 +772,18 @@ class StateCreate extends State<Create> {
                     );
                   }),
                 ),
+              ],
+            ),
 
-              // Transmitters Section
-              _buildSectionHeader("Transmitters (Tx)"),
+                    // Transmitters Section
+                    Column(
+                      key: _txKey,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(
+                          "Transmitters (Tx)",
+                          icon: Icons.sensors,
+                        ),
               Row(
                 children: [
                   _buildCountField(
@@ -759,9 +902,18 @@ class StateCreate extends State<Create> {
                     );
                   }),
                 ),
+              ],
+            ),
 
-              // Transponders Section
-              _buildSectionHeader("Transponders (Tp) - Optional"),
+                    // Transponders Section
+                    Column(
+                      key: _tpKey,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(
+                          "Transponders (Tp)",
+                          icon: Icons.swap_horiz,
+                        ),
               Row(
                 children: [
                   _buildOptionalCountField(
@@ -882,9 +1034,18 @@ class StateCreate extends State<Create> {
                     );
                   }),
                 ),
+              ],
+            ),
 
-              // Payloads Section
-              _buildSectionHeader("Payloads (Pl) - Optional"),
+                    // Payloads Section
+                    Column(
+                      key: _plKey,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(
+                          "Payloads (Pl)",
+                          icon: Icons.developer_board,
+                        ),
               Row(
                 children: [
                   _buildOptionalCountField(
@@ -1017,9 +1178,18 @@ class StateCreate extends State<Create> {
                     );
                   }),
                 ),
+              ],
+            ),
 
-              // Configs Section
-              _buildSectionHeader("Configurations"),
+                    // Configurations Section
+                    Column(
+                      key: _configKey,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionHeader(
+                          "Configurations",
+                          icon: Icons.tune,
+                        ),
               Row(
                 children: [
                   _buildOptionalCountField(
@@ -1257,34 +1427,50 @@ class StateCreate extends State<Create> {
                   }),
                 ),
 
-              // Final Save Section
-              const SizedBox(height: 64),
-              const Divider(),
-              const SizedBox(height: 32),
-              Center(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 48,
-                      vertical: 24,
+                      ],
                     ),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onPressed: () {
-                    sendRequest();
-                  },
-                  icon: const Icon(Icons.rocket_launch),
-                  label: const Text("Initialize Database"),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
-              const SizedBox(height: 64),
-            ],
+            ),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNavItem(
+    int index,
+    IconData icon,
+    String label,
+    GlobalKey key,
+  ) {
+    final isSelected = _selectedNavIndex == index;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Material(
+        color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        child: ListTile(
+          onTap: () => _scrollToSection(key, index),
+          leading: Icon(
+            icon,
+            color: isSelected ? Colors.blue : Colors.grey.shade600,
+            size: 20,
+          ),
+          title: Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+              color: isSelected ? Colors.blue.shade700 : Colors.grey.shade700,
+            ),
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          dense: true,
         ),
       ),
     );
