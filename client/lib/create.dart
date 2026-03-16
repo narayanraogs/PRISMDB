@@ -37,6 +37,9 @@ class StateCreate extends State<Create> {
   final TextEditingController noOfPlController = TextEditingController(
     text: '0',
   );
+  final TextEditingController noOfConfigController = TextEditingController(
+    text: '0',
+  );
 
   List<TextEditingController> rxNames = [];
   List<TextEditingController> rxFreqs = [];
@@ -56,6 +59,10 @@ class StateCreate extends State<Create> {
   List<String> tpTxNameSelected = [];
 
   List<TextEditingController> plNames = [];
+  List<TextEditingController> plFreqs = [];
+  List<String> plFreqUnits = [];
+  List<TextEditingController> plPeakPowers = [];
+  List<TextEditingController> plAveragePowers = [];
 
   List<TextEditingController> configNames = [];
   List<String> configTypes = [];
@@ -63,6 +70,7 @@ class StateCreate extends State<Create> {
   List<String> configTxNameSelected = [];
   List<String> configTpNameSelected = [];
   List<String> configPlNameSelected = [];
+  List<String> configPlResolutionModes = [];
 
   String? _integerValidator(String? value) {
     if (value == null || value.isEmpty) return "Value has to be an integer";
@@ -201,10 +209,18 @@ class StateCreate extends State<Create> {
 
   void createNewPlController() {
     plNames.add(TextEditingController());
+    plFreqs.add(TextEditingController());
+    plFreqUnits.add('MHz');
+    plPeakPowers.add(TextEditingController());
+    plAveragePowers.add(TextEditingController());
   }
 
   void removePlAt(int index) {
     plNames.removeAt(index);
+    plFreqs.removeAt(index);
+    plFreqUnits.removeAt(index);
+    plPeakPowers.removeAt(index);
+    plAveragePowers.removeAt(index);
     noOfPlController.text = plNames.length.toString();
     sanetizeConfigValues();
   }
@@ -220,6 +236,7 @@ class StateCreate extends State<Create> {
     configTxNameSelected.add("");
     configTpNameSelected.add("");
     configPlNameSelected.add("");
+    configPlResolutionModes.add("Normal");
   }
 
   void removeConfigAt(int index) {
@@ -229,6 +246,7 @@ class StateCreate extends State<Create> {
     configTxNameSelected.removeAt(index);
     configTpNameSelected.removeAt(index);
     configPlNameSelected.removeAt(index);
+    configPlResolutionModes.removeAt(index);
   }
 
   void removeConfigController() {
@@ -262,6 +280,14 @@ class StateCreate extends State<Create> {
     req.tpTxNames = tpTxNameSelected;
 
     req.plNames = plNames.map((e) => e.text).toList();
+    req.plFrequencies = List.generate(plFreqs.length, (i) {
+      double val = double.tryParse(plFreqs[i].text) ?? 0.0;
+      return _convertFrequencyToHz(val, plFreqUnits[i]);
+    });
+    req.plPeakPowers =
+        plPeakPowers.map((e) => double.tryParse(e.text) ?? 0.0).toList();
+    req.plAveragePowers =
+        plAveragePowers.map((e) => double.tryParse(e.text) ?? 0.0).toList();
 
     req.configNames = configNames.map((e) => e.text).toList();
     req.configTypes = configTypes;
@@ -269,6 +295,7 @@ class StateCreate extends State<Create> {
     req.configTxNames = configTxNameSelected;
     req.configTPNames = configTpNameSelected;
     req.configPlNames = configPlNameSelected;
+    req.configPlResolutionModes = configPlResolutionModes;
 
     try {
       final response = await http.post(
@@ -324,8 +351,8 @@ class StateCreate extends State<Create> {
 
   Widget _buildFlatCard({
     required Widget child,
-    double width = 300,
-    double height = 350,
+    double width = 280,
+    double? height = 320,
   }) {
     return Container(
       width: width,
@@ -336,7 +363,44 @@ class StateCreate extends State<Create> {
         border: Border.all(color: Colors.grey.shade300, width: 1.0),
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: Padding(padding: const EdgeInsets.all(16.0), child: child),
+      child: Padding(padding: const EdgeInsets.all(12.0), child: child),
+    );
+  }
+
+  Widget _buildAddRemoveButtons({
+    required String label,
+    required VoidCallback onAdd,
+    required VoidCallback? onRemove,
+  }) {
+    return Row(
+      children: [
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.blue.withValues(alpha: 0.1),
+            foregroundColor: Colors.blue,
+            elevation: 0,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            textStyle: const TextStyle(fontSize: 13),
+          ),
+          onPressed: onAdd,
+          icon: const Icon(Icons.add, size: 16),
+          label: Text("Add $label"),
+        ),
+        const SizedBox(width: 8),
+        if (onRemove != null)
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.red.withValues(alpha: 0.1),
+              foregroundColor: Colors.red,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              textStyle: const TextStyle(fontSize: 13),
+            ),
+            onPressed: onRemove,
+            icon: const Icon(Icons.remove, size: 16),
+            label: const Text("Remove Last"),
+          ),
+      ],
     );
   }
 
@@ -474,13 +538,29 @@ class StateCreate extends State<Create> {
                       removeRxController,
                     ),
                   ),
+                  _buildAddRemoveButtons(
+                    label: "Rx Card",
+                    onAdd: () {
+                      setState(() {
+                        createNewRxController();
+                        noOfRxController.text = rxNames.length.toString();
+                      });
+                    },
+                    onRemove: rxNames.isEmpty
+                        ? null
+                        : () {
+                            setState(() {
+                              removeRxController();
+                            });
+                          },
+                  ),
                 ],
               ),
               if (rxNames.isNotEmpty)
                 Wrap(
                   children: List.generate(rxNames.length, (index) {
                     return _buildFlatCard(
-                      height: 350,
+                      height: 300,
                       child: Column(
                         children: [
                           Row(
@@ -490,26 +570,32 @@ class StateCreate extends State<Create> {
                                 "Rx ${index + 1}",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    removeRxAt(index);
-                                  });
-                                },
-                                tooltip: "Delete Receiver",
+                              SizedBox(
+                                height: 28,
+                                width: 28,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red, size: 16),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    setState(() {
+                                      removeRxAt(index);
+                                    });
+                                  },
+                                  tooltip: "Delete Receiver",
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           TextFormField(
                             controller: rxNames[index],
                             validator: _stringValidator,
                             decoration: _buildFlatInputDecoration("Rx Name"),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Row(
                             children: [
                               Expanded(
@@ -522,7 +608,7 @@ class StateCreate extends State<Create> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
                               Expanded(
                                 flex: 1,
                                 child: DropdownButtonFormField<String>(
@@ -533,7 +619,7 @@ class StateCreate extends State<Create> {
                                   ) {
                                     return DropdownMenuItem<String>(
                                       value: value,
-                                      child: Text(value),
+                                      child: Text(value, style: const TextStyle(fontSize: 12)),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
@@ -545,7 +631,7 @@ class StateCreate extends State<Create> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           rxModulations[index],
                         ],
                       ),
@@ -567,13 +653,29 @@ class StateCreate extends State<Create> {
                       removeTxController,
                     ),
                   ),
+                  _buildAddRemoveButtons(
+                    label: "Tx Card",
+                    onAdd: () {
+                      setState(() {
+                        createNewTxController();
+                        noOfTxController.text = txNames.length.toString();
+                      });
+                    },
+                    onRemove: txNames.isEmpty
+                        ? null
+                        : () {
+                            setState(() {
+                              removeTxController();
+                            });
+                          },
+                  ),
                 ],
               ),
               if (txNames.isNotEmpty)
                 Wrap(
                   children: List.generate(txNames.length, (index) {
                     return _buildFlatCard(
-                      height: 400,
+                      height: 340,
                       child: Column(
                         children: [
                           Row(
@@ -583,26 +685,32 @@ class StateCreate extends State<Create> {
                                 "Tx ${index + 1}",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    removeTxAt(index);
-                                  });
-                                },
-                                tooltip: "Delete Transmitter",
+                              SizedBox(
+                                height: 28,
+                                width: 28,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red, size: 16),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    setState(() {
+                                      removeTxAt(index);
+                                    });
+                                  },
+                                  tooltip: "Delete Transmitter",
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           TextFormField(
                             controller: txNames[index],
                             validator: _stringValidator,
                             decoration: _buildFlatInputDecoration("Tx Name"),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Row(
                             children: [
                               Expanded(
@@ -615,7 +723,7 @@ class StateCreate extends State<Create> {
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 6),
                               Expanded(
                                 flex: 1,
                                 child: DropdownButtonFormField<String>(
@@ -626,7 +734,7 @@ class StateCreate extends State<Create> {
                                   ) {
                                     return DropdownMenuItem<String>(
                                       value: value,
-                                      child: Text(value),
+                                      child: Text(value, style: const TextStyle(fontSize: 12)),
                                     );
                                   }).toList(),
                                   onChanged: (value) {
@@ -638,13 +746,13 @@ class StateCreate extends State<Create> {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           TextFormField(
                             controller: txPowers[index],
                             validator: _doubleValidator,
                             decoration: _buildFlatInputDecoration("Power"),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           txModulations[index],
                         ],
                       ),
@@ -666,6 +774,22 @@ class StateCreate extends State<Create> {
                       removeTpController,
                     ),
                   ),
+                  _buildAddRemoveButtons(
+                    label: "Tp Card",
+                    onAdd: () {
+                      setState(() {
+                        createNewTpController();
+                        noOfTpController.text = tpNames.length.toString();
+                      });
+                    },
+                    onRemove: tpNames.isEmpty
+                        ? null
+                        : () {
+                            setState(() {
+                              removeTpController();
+                            });
+                          },
+                  ),
                 ],
               ),
               if (tpNames.isNotEmpty)
@@ -686,7 +810,7 @@ class StateCreate extends State<Create> {
                       tpTxNameSelected[index] = "";
 
                     return _buildFlatCard(
-                      height: 400,
+                      height: 290,
                       child: Column(
                         children: [
                           Row(
@@ -696,33 +820,39 @@ class StateCreate extends State<Create> {
                                 "Tp ${index + 1}",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    removeTpAt(index);
-                                  });
-                                },
-                                tooltip: "Delete Transponder",
+                              SizedBox(
+                                height: 28,
+                                width: 28,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red, size: 16),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    setState(() {
+                                      removeTpAt(index);
+                                    });
+                                  },
+                                  tooltip: "Delete Transponder",
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           TextFormField(
                             controller: tpNames[index],
                             validator: _stringValidator,
                             decoration: _buildFlatInputDecoration("Tp Name"),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
                             value: tpRxNameSelected[index],
                             decoration: _buildFlatInputDecoration("Mapped Rx"),
                             items: rxList.map((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
-                                child: Text(value.isEmpty ? "None" : value),
+                                child: Text(value.isEmpty ? "None" : value, style: const TextStyle(fontSize: 12)),
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -731,14 +861,14 @@ class StateCreate extends State<Create> {
                               });
                             },
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           DropdownButtonFormField<String>(
                             value: tpTxNameSelected[index],
                             decoration: _buildFlatInputDecoration("Mapped Tx"),
                             items: txList.map((String value) {
                               return DropdownMenuItem<String>(
                                 value: value,
-                                child: Text(value.isEmpty ? "None" : value),
+                                child: Text(value.isEmpty ? "None" : value, style: const TextStyle(fontSize: 12)),
                               );
                             }).toList(),
                             onChanged: (value) {
@@ -767,14 +897,31 @@ class StateCreate extends State<Create> {
                       removePlController,
                     ),
                   ),
+                  _buildAddRemoveButtons(
+                    label: "Pl Card",
+                    onAdd: () {
+                      setState(() {
+                        createNewPlController();
+                        noOfPlController.text = plNames.length.toString();
+                      });
+                    },
+                    onRemove: plNames.isEmpty
+                        ? null
+                        : () {
+                            setState(() {
+                              removePlController();
+                            });
+                          },
+                  ),
                 ],
               ),
               if (plNames.isNotEmpty)
                 Wrap(
                   children: List.generate(plNames.length, (index) {
                     return _buildFlatCard(
-                      height: 200,
+                      height: null,
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -783,24 +930,87 @@ class StateCreate extends State<Create> {
                                 "Pl ${index + 1}",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    removePlAt(index);
-                                  });
-                                },
-                                tooltip: "Delete Payload",
+                              SizedBox(
+                                height: 28,
+                                width: 28,
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                    size: 16,
+                                  ),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
+                                    setState(() {
+                                      removePlAt(index);
+                                    });
+                                  },
+                                  tooltip: "Delete Payload",
+                                ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
                           TextFormField(
                             controller: plNames[index],
                             validator: _stringValidator,
                             decoration: _buildFlatInputDecoration("Pl Name"),
+                          ),
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: TextFormField(
+                                  controller: plFreqs[index],
+                                  validator: _doubleValidator,
+                                  decoration: _buildFlatInputDecoration(
+                                    "Frequency",
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                flex: 1,
+                                child: DropdownButtonFormField<String>(
+                                  value: plFreqUnits[index],
+                                  decoration: _buildFlatInputDecoration("Unit"),
+                                  items: ["Hz", "kHz", "MHz", "GHz"].map((
+                                    String value,
+                                  ) {
+                                    return DropdownMenuItem<String>(
+                                      value: value,
+                                      child: Text(
+                                        value,
+                                        style: const TextStyle(fontSize: 12),
+                                      ),
+                                    );
+                                  }).toList(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      plFreqUnits[index] = value ?? "MHz";
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: plPeakPowers[index],
+                            validator: _doubleValidator,
+                            decoration: _buildFlatInputDecoration("Peak Power"),
+                          ),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: plAveragePowers[index],
+                            validator: _doubleValidator,
+                            decoration: _buildFlatInputDecoration(
+                              "Average Power",
+                            ),
                           ),
                         ],
                       ),
@@ -812,37 +1022,35 @@ class StateCreate extends State<Create> {
               _buildSectionHeader("Configurations"),
               Row(
                 children: [
-                  FilledButton.icon(
-                    style: FilledButton.styleFrom(
-                      backgroundColor: Colors.blue.withValues(alpha: 0.1),
-                      foregroundColor: Colors.blue,
-                      elevation: 0,
+                  _buildOptionalCountField(
+                    "Config Count",
+                    noOfConfigController,
+                    () => _syncControllers(
+                      noOfConfigController.text,
+                      configNames,
+                      createNewConfigController,
+                      removeConfigController,
                     ),
-                    onPressed: () {
-                      createNewConfigController();
-                      setState(() {});
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text("Add Configuration"),
                   ),
-                  const SizedBox(width: 16),
-                  if (configNames.isNotEmpty)
-                    FilledButton.icon(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.red.withValues(alpha: 0.1),
-                        foregroundColor: Colors.red,
-                        elevation: 0,
-                      ),
-                      onPressed: () {
-                        removeConfigController();
-                        setState(() {});
-                      },
-                      icon: const Icon(Icons.remove),
-                      label: const Text("Remove"),
-                    ),
+                  _buildAddRemoveButtons(
+                    label: "Config Card",
+                    onAdd: () {
+                      setState(() {
+                        createNewConfigController();
+                        noOfConfigController.text = configNames.length.toString();
+                      });
+                    },
+                    onRemove: configNames.isEmpty
+                        ? null
+                        : () {
+                            setState(() {
+                              removeConfigController();
+                              noOfConfigController.text = configNames.length.toString();
+                            });
+                          },
+                  ),
                 ],
               ),
-              const SizedBox(height: 16),
               if (configNames.isNotEmpty)
                 Wrap(
                   children: List.generate(configNames.length, (index) {
@@ -867,10 +1075,11 @@ class StateCreate extends State<Create> {
                     );
 
                     return _buildFlatCard(
-                      width: 450,
-                      height: 500,
+                      width: 280,
+                      height: null,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -879,75 +1088,67 @@ class StateCreate extends State<Create> {
                                 "Config ${index + 1}",
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
+                                  fontSize: 13,
                                 ),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  setState(() {
-                                    removeConfigAt(index);
-                                  });
-                                },
-                                tooltip: "Delete Configuration",
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
-                                  controller: configNames[index],
-                                  validator: _stringValidator,
-                                  decoration: _buildFlatInputDecoration(
-                                    "Config Name",
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: DropdownButtonFormField<String>(
-                                  value: configTypes[index],
-                                  decoration: _buildFlatInputDecoration("Type"),
-                                  items:
-                                      [
-                                        "Rx",
-                                        "Tx",
-                                        "Tp",
-                                        "PL",
-                                      ].map((String value) {
-                                        return DropdownMenuItem<String>(
-                                          value: value,
-                                          child: Text(
-                                            value,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        );
-                                      }).toList(),
-                                  onChanged: (value) {
+                              SizedBox(
+                                height: 28,
+                                width: 28,
+                                child: IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red, size: 16),
+                                  padding: EdgeInsets.zero,
+                                  onPressed: () {
                                     setState(() {
-                                      configTypes[index] = value ?? "";
+                                      removeConfigAt(index);
+                                      noOfConfigController.text = configNames.length.toString();
                                     });
                                   },
+                                  tooltip: "Delete Configuration",
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 8),
+                          TextFormField(
+                            controller: configNames[index],
+                            validator: _stringValidator,
+                            decoration: _buildFlatInputDecoration("Config Name"),
+                          ),
+                          const SizedBox(height: 6),
+                          DropdownButtonFormField<String>(
+                            value: configTypes[index],
+                            decoration: _buildFlatInputDecoration("Type"),
+                            items: ["Rx", "Tx", "Tp", "PL"].map((String value) {
+                              return DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(
+                                  value,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                configTypes[index] = value ?? "";
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
 
                           if (configTypes[index] == "Rx") ...[
                             DropdownButtonFormField<String>(
-                              value:
-                                  rxList.contains(configRxNameSelected[index])
+                              value: rxList.contains(configRxNameSelected[index])
                                   ? configRxNameSelected[index]
                                   : "",
-                              decoration: _buildFlatInputDecoration(
-                                "Mapped Rx",
-                              ),
+                              decoration: _buildFlatInputDecoration("Mapped Rx"),
                               items: rxList.map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
-                                  child: Text(value.isEmpty ? "None" : value),
+                                  child: Text(
+                                    value.isEmpty ? "None" : value,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -959,17 +1160,17 @@ class StateCreate extends State<Create> {
                           ],
                           if (configTypes[index] == "Tx") ...[
                             DropdownButtonFormField<String>(
-                              value:
-                                  txList.contains(configTxNameSelected[index])
+                              value: txList.contains(configTxNameSelected[index])
                                   ? configTxNameSelected[index]
                                   : "",
-                              decoration: _buildFlatInputDecoration(
-                                "Mapped Tx",
-                              ),
+                              decoration: _buildFlatInputDecoration("Mapped Tx"),
                               items: txList.map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
-                                  child: Text(value.isEmpty ? "None" : value),
+                                  child: Text(
+                                    value.isEmpty ? "None" : value,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -981,17 +1182,17 @@ class StateCreate extends State<Create> {
                           ],
                           if (configTypes[index] == "Tp") ...[
                             DropdownButtonFormField<String>(
-                              value:
-                                  tpList.contains(configTpNameSelected[index])
+                              value: tpList.contains(configTpNameSelected[index])
                                   ? configTpNameSelected[index]
                                   : "",
-                              decoration: _buildFlatInputDecoration(
-                                "Mapped Tp",
-                              ),
+                              decoration: _buildFlatInputDecoration("Mapped Tp"),
                               items: tpList.map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
-                                  child: Text(value.isEmpty ? "None" : value),
+                                  child: Text(
+                                    value.isEmpty ? "None" : value,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (value) {
@@ -1005,20 +1206,47 @@ class StateCreate extends State<Create> {
                             DropdownButtonFormField<String>(
                               value:
                                   plList.contains(configPlNameSelected[index])
-                                  ? configPlNameSelected[index]
-                                  : "",
+                                      ? configPlNameSelected[index]
+                                      : "",
                               decoration: _buildFlatInputDecoration(
                                 "Mapped Pl",
                               ),
                               items: plList.map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
-                                  child: Text(value.isEmpty ? "None" : value),
+                                  child: Text(
+                                    value.isEmpty ? "None" : value,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
                                 );
                               }).toList(),
                               onChanged: (value) {
                                 setState(() {
                                   configPlNameSelected[index] = value ?? "";
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 8),
+                            DropdownButtonFormField<String>(
+                              value: configPlResolutionModes[index],
+                              decoration: _buildFlatInputDecoration(
+                                "Resolution Mode",
+                              ),
+                              items: ["Normal", "High", "Low"].map((
+                                String value,
+                              ) {
+                                return DropdownMenuItem<String>(
+                                  value: value,
+                                  child: Text(
+                                    value,
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                setState(() {
+                                  configPlResolutionModes[index] =
+                                      value ?? "Normal";
                                 });
                               },
                             ),

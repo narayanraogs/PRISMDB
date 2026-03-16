@@ -105,25 +105,29 @@ type SingleTableDetails struct {
 }
 
 type AutoPopulate struct {
-	DBPath        string
-	RxNames       []string
-	RxFrequencies []float64
-	RxModulation  []string
-	TxNames       []string
-	TxFrequencies []float64
-	TxPowers      []float64
-	TxModulation  []string
-	TPNames       []string
-	TPRxNames     []string
-	TPTxNames     []string
-	PlNames       []string
-	ConfigNames   []string
-	ConfigTypes   []string
-	ConfigRxNames []string
-	ConfigTxNames []string
-	ConfigTPNames []string
-	ConfigPlNames []string
-	Create        bool
-	OK            bool
-	Message       string
+	DBPath                  string
+	RxNames                 []string
+	RxFrequencies           []float64
+	RxModulation            []string
+	TxNames                 []string
+	TxFrequencies           []float64
+	TxPowers                []float64
+	TxModulation            []string
+	TPNames                 []string
+	TPRxNames               []string
+	TPTxNames               []string
+	PlNames                 []string
+	PlFrequencies           []float64
+	PlPeakPowers            []float64
+	PlAveragePowers         []float64
+	ConfigNames             []string
+	ConfigTypes             []string
+	ConfigRxNames           []string
+	ConfigTxNames           []string
+	ConfigTPNames           []string
+	ConfigPlNames           []string
+	ConfigPlResolutionModes []string
+	Create                  bool
+	OK                      bool
+	Message                 string
 }

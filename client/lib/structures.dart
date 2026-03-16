@@ -309,6 +309,9 @@ class CreateRequest {
   List<String> tpTxNames = [];
 
   List<String> plNames = [];
+  List<double> plFrequencies = [];
+  List<double> plPeakPowers = [];
+  List<double> plAveragePowers = [];
 
   List<String> configNames = [];
   List<String> configTypes = [];
@@ -316,6 +319,7 @@ class CreateRequest {
   List<String> configTxNames = [];
   List<String> configTPNames = [];
   List<String> configPlNames = [];
+  List<String> configPlResolutionModes = [];
 
   bool create = false;
   bool ok = false;
@@ -337,12 +341,16 @@ class CreateRequest {
       'TPRxNames': tpRxNames,
       'TPTxNames': tpTxNames,
       'PlNames': plNames,
+      'PlFrequencies': plFrequencies,
+      'PlPeakPowers': plPeakPowers,
+      'PlAveragePowers': plAveragePowers,
       'ConfigNames': configNames,
       'ConfigTypes': configTypes,
       'ConfigRxNames': configRxNames,
       'ConfigTxNames': configTxNames,
       'ConfigTPNames': configTPNames,
       'ConfigPlNames': configPlNames,
+      'ConfigPlResolutionModes': configPlResolutionModes,
       'Create': create,
       'OK': ok,
       'Message': message,
@@ -447,6 +455,45 @@ class CreateRequest {
         create.plNames.add(temp);
       }
     }
+    list = jsonData['PlFrequencies'] as List?;
+    if (list != null) {
+      for (var l in list) {
+        double temp = 0;
+        try {
+          temp = l as double;
+        } catch (e) {
+          int i = l as int;
+          temp = i * 1.0;
+        }
+        create.plFrequencies.add(temp);
+      }
+    }
+    list = jsonData['PlPeakPowers'] as List?;
+    if (list != null) {
+      for (var l in list) {
+        double temp = 0;
+        try {
+          temp = l as double;
+        } catch (e) {
+          int i = l as int;
+          temp = i * 1.0;
+        }
+        create.plPeakPowers.add(temp);
+      }
+    }
+    list = jsonData['PlAveragePowers'] as List?;
+    if (list != null) {
+      for (var l in list) {
+        double temp = 0;
+        try {
+          temp = l as double;
+        } catch (e) {
+          int i = l as int;
+          temp = i * 1.0;
+        }
+        create.plAveragePowers.add(temp);
+      }
+    }
     list = jsonData['ConfigNames'] as List?;
     if (list != null) {
       for (var l in list) {
@@ -487,6 +534,13 @@ class CreateRequest {
       for (var l in list) {
         String temp = l as String;
         create.configPlNames.add(temp);
+      }
+    }
+    list = jsonData['ConfigPlResolutionModes'] as List?;
+    if (list != null) {
+      for (var l in list) {
+        String temp = l as String;
+        create.configPlResolutionModes.add(temp);
       }
     }
 

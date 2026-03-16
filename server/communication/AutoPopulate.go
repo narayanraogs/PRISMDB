@@ -52,17 +52,21 @@ func Create(auto utils.AutoPopulate) utils.Ack {
 
 	for i := range auto.ConfigNames {
 		var plName string
+		var resMode string
 		if i < len(auto.ConfigPlNames) {
 			plName = auto.ConfigPlNames[i]
 		}
-		ack := autoPopulateConfigurations(db, auto.ConfigNames[i], auto.ConfigTypes[i], auto.ConfigRxNames[i], auto.ConfigTxNames[i], auto.ConfigTPNames[i], plName)
+		if i < len(auto.ConfigPlResolutionModes) {
+			resMode = auto.ConfigPlResolutionModes[i]
+		}
+		ack := autoPopulateConfigurations(db, auto.ConfigNames[i], auto.ConfigTypes[i], auto.ConfigRxNames[i], auto.ConfigTxNames[i], auto.ConfigTPNames[i], plName, resMode, auto)
 		if !ack.OK {
 			return ack
 		}
 	}
 
 	for i := range auto.PlNames {
-		ack := autoPopulatePLRelated(db, auto.PlNames[i])
+		ack := autoPopulatePLRelated(db, auto.PlNames[i], auto.PlFrequencies[i], auto.PlPeakPowers[i], auto.PlAveragePowers[i])
 		if !ack.OK {
 			return ack
 		}
@@ -612,7 +616,7 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 	}
 }
 
-func autoPopulatePLRelated(db *sql.DB, plName string) utils.Ack {
+func autoPopulatePLRelated(db *sql.DB, plName string, freq float64, peakPower float64, avgPower float64) utils.Ack {
 	tx, err := db.Begin()
 	if err != nil {
 		fmt.Println(err)
@@ -633,13 +637,21 @@ func autoPopulatePLRelated(db *sql.DB, plName string) utils.Ack {
 	}
 	defer statement.Close()
 
-	_, err = statement.Exec(plName, "Normal", 1.0, 2e9, -20.0, 1e-3, 1e-6)
+	_, err = statement.Exec(plName, "Normal", 1.0, freq, -20.0, 1e-3, 1e-6) // Using freq, others still default for now
 	if err != nil {
 		fmt.Println("Error inserting PL:", err)
 		tx.Rollback()
 		return utils.Ack{
 			OK:      false,
 			Message: "Cannot Connect to Insert PL :" + err.Error(),
+		}
+	}
+
+	// Update with peak and average power if specified
+	if peakPower != 0 || avgPower != 0 {
+		_, err = tx.Exec("UPDATE SpecPL SET PeakPower = ?, AveragePower = ? WHERE ConfigName = ?", peakPower, avgPower, plName)
+		if err != nil {
+			fmt.Println("Error updating PL powers:", err)
 		}
 	}
 
@@ -686,7 +698,7 @@ func autoPopulatePLRelated(db *sql.DB, plName string) utils.Ack {
 	}
 }
 
-func autoPopulateConfigurations(db *sql.DB, configName string, configType string, rxName string, txName string, tpName string, plName string) utils.Ack {
+func autoPopulateConfigurations(db *sql.DB, configName string, configType string, rxName string, txName string, tpName string, plName string, resolutionMode string, auto utils.AutoPopulate) utils.Ack {
 	tx, err := db.Begin()
 	if err != nil {
 		return utils.Ack{
@@ -737,6 +749,35 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 				Message: "Unable to insert Downlink Loss for transmitter",
 				OK:      false,
 			}
+		}
+	}
+
+	// If ConfigType is PL, we need to populate SpecPL for this configuration
+	if strings.EqualFold(configType, "PL") {
+		var freq float64 = 2e9
+		var peakPower float64 = 0
+		var avgPower float64 = 0
+
+		// Find payload values from the auto request
+		for i, name := range auto.PlNames {
+			if name == plName {
+				freq = auto.PlFrequencies[i]
+				peakPower = auto.PlPeakPowers[i]
+				avgPower = auto.PlAveragePowers[i]
+				break
+			}
+		}
+
+		statement, err := tx.Prepare("insert into SpecPL (ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, PulsePeriod, PulseWidth, PeakPower, AveragePower) values(?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		if err != nil {
+			tx.Rollback()
+			return utils.Ack{OK: false, Message: "Error Preparing SpecPL: " + err.Error()}
+		}
+		_, err = statement.Exec(configName, resolutionMode, 1.0, freq, -20.0, 1e-3, 1e-6, peakPower, avgPower)
+		statement.Close()
+		if err != nil {
+			tx.Rollback()
+			return utils.Ack{OK: false, Message: "Error Inserting SpecPL for Config: " + err.Error()}
 		}
 	}
 
