@@ -584,14 +584,17 @@ SELECT * FROM "SpecPL";
 -- name: GetSpecPLByConfig :one
 SELECT * FROM "SpecPL" WHERE "ConfigName" LIKE ?;
 
+-- name: GetSpecPLByKey :one
+SELECT * FROM "SpecPL" WHERE "ConfigName" = ? AND COALESCE("ResolutionMode", '') = COALESCE(?, '');
+
 -- name: InsertSpecPL :exec
 INSERT INTO "SpecPL" ("ConfigName", "ResolutionMode", "OnTime", "CenterFrequency", "UplinkPower", "PeakPower", "PeakPowerTolerance", "AveragePower", "AveragePowerTolerance", "DutyCycle", "DutyCycleTolerance", "PulsePeriod", "PulsePeriodTolerance", "ReplicaPeriod", "ReplicaPeriodTolerance", "PulseWidth", "PulseWidthTolerance", "PulseSeperation", "PulseSeperationTolerance", "RiseTime", "RiseTimeTolerance", "FallTime", "FallTimeTolerance", "AverageTxPower", "AverageTxPowerTolerance", "ChirpBandwidth", "ChirpBandwidthTolerance", "RepetitionRate", "RepetitionRateTolerance", "ReplicaRate", "ReplicaRateTolerance", "FrequencyShift", "FrequencyShiftTolerance", "Droop", "DroopTolerance", "Phase", "PhaseTolerance", "Overshoot", "OvershootTolerance", "ChirpRate", "ChirpRateTolerance", "ChirpRateDeviation", "ChirpRateDeviationTolerance", "Ripple", "RippleTolerance") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: UpdateSpecPL :exec
-UPDATE "SpecPL" SET "ConfigName" = ?, "ResolutionMode" = ?, "OnTime" = ?, "CenterFrequency" = ?, "UplinkPower" = ?, "PeakPower" = ?, "PeakPowerTolerance" = ?, "AveragePower" = ?, "AveragePowerTolerance" = ?, "DutyCycle" = ?, "DutyCycleTolerance" = ?, "PulsePeriod" = ?, "PulsePeriodTolerance" = ?, "ReplicaPeriod" = ?, "ReplicaPeriodTolerance" = ?, "PulseWidth" = ?, "PulseWidthTolerance" = ?, "PulseSeperation" = ?, "PulseSeperationTolerance" = ?, "RiseTime" = ?, "RiseTimeTolerance" = ?, "FallTime" = ?, "FallTimeTolerance" = ?, "AverageTxPower" = ?, "AverageTxPowerTolerance" = ?, "ChirpBandwidth" = ?, "ChirpBandwidthTolerance" = ?, "RepetitionRate" = ?, "RepetitionRateTolerance" = ?, "ReplicaRate" = ?, "ReplicaRateTolerance" = ?, "FrequencyShift" = ?, "FrequencyShiftTolerance" = ?, "Droop" = ?, "DroopTolerance" = ?, "Phase" = ?, "PhaseTolerance" = ?, "Overshoot" = ?, "OvershootTolerance" = ?, "ChirpRate" = ?, "ChirpRateTolerance" = ?, "ChirpRateDeviation" = ?, "ChirpRateDeviationTolerance" = ?, "Ripple" = ?, "RippleTolerance" = ? WHERE "ConfigName" = ?;
+UPDATE "SpecPL" SET "ConfigName" = ?, "ResolutionMode" = ?, "OnTime" = ?, "CenterFrequency" = ?, "UplinkPower" = ?, "PeakPower" = ?, "PeakPowerTolerance" = ?, "AveragePower" = ?, "AveragePowerTolerance" = ?, "DutyCycle" = ?, "DutyCycleTolerance" = ?, "PulsePeriod" = ?, "PulsePeriodTolerance" = ?, "ReplicaPeriod" = ?, "ReplicaPeriodTolerance" = ?, "PulseWidth" = ?, "PulseWidthTolerance" = ?, "PulseSeperation" = ?, "PulseSeperationTolerance" = ?, "RiseTime" = ?, "RiseTimeTolerance" = ?, "FallTime" = ?, "FallTimeTolerance" = ?, "AverageTxPower" = ?, "AverageTxPowerTolerance" = ?, "ChirpBandwidth" = ?, "ChirpBandwidthTolerance" = ?, "RepetitionRate" = ?, "RepetitionRateTolerance" = ?, "ReplicaRate" = ?, "ReplicaRateTolerance" = ?, "FrequencyShift" = ?, "FrequencyShiftTolerance" = ?, "Droop" = ?, "DroopTolerance" = ?, "Phase" = ?, "PhaseTolerance" = ?, "Overshoot" = ?, "OvershootTolerance" = ?, "ChirpRate" = ?, "ChirpRateTolerance" = ?, "ChirpRateDeviation" = ?, "ChirpRateDeviationTolerance" = ?, "Ripple" = ?, "RippleTolerance" = ? WHERE "ConfigName" = ? AND COALESCE("ResolutionMode", '') = COALESCE(?, '');
 
 -- name: DeleteSpecPL :exec
-DELETE FROM "SpecPL" WHERE "ConfigName" LIKE ?;
+DELETE FROM "SpecPL" WHERE "ConfigName" = ? AND COALESCE("ResolutionMode", '') = COALESCE(?, '');
 
 -- SpectrumProfile
 -- name: InsertSpectrumProfile :exec

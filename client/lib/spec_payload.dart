@@ -28,7 +28,7 @@ class StateSpecPayload extends State<SpecPayload> {
 
   // 2: ResolutionMode (Dropdown)
   String? _selectedResolutionMode;
-  final List<String> _resolutionModes = ['LR', 'HR', 'Normal'];
+  final List<String> _resolutionModes = ['', 'HR', 'LR'];
 
   final TextEditingController _onTimeController = TextEditingController();
   final TextEditingController _centerFreqController = TextEditingController(); // Freq Dropdown
@@ -172,6 +172,8 @@ class StateSpecPayload extends State<SpecPayload> {
     // 2: ResolutionMode
     if (_resolutionModes.contains(data[2])) {
       _selectedResolutionMode = data[2];
+    } else if (data[2] == 'Normal' || data[2] == 'NULL') {
+       _selectedResolutionMode = ''; // Map old 'Normal' or 'NULL' to new NULL/''
     }
     
     _onTimeController.text = data[3];
@@ -242,10 +244,8 @@ class StateSpecPayload extends State<SpecPayload> {
         var temp = RowDisplayDetails.fromJson(
             jsonDecode(response.body) as Map<String, dynamic>);
         if (temp.ok) {
-           if (temp.values.length >= 46) {
+            if (temp.values.length >= 46) {
              List<String> data = temp.values;
-             // Align data (RowHandlers returns ConfigName at 0, skipping ID)
-             data.insert(0, "");
              
              if (_configNames.contains(data[1])) {
                  _selectedConfigName = data[1];
@@ -254,7 +254,11 @@ class StateSpecPayload extends State<SpecPayload> {
                  _selectedConfigName = data[1];
              }
              
-             if (_resolutionModes.contains(data[2])) _selectedResolutionMode = data[2];
+             if (_resolutionModes.contains(data[2])) {
+                 _selectedResolutionMode = data[2];
+             } else if (data[2] == 'Normal' || data[2] == 'NULL') {
+                 _selectedResolutionMode = '';
+             }
              
              _onTimeController.text = data[3];
              _centerFreqController.text = data[4];
@@ -385,9 +389,9 @@ class StateSpecPayload extends State<SpecPayload> {
     values.add(_rippleTolController.text);
 
     if (edit) {
-      // Primary Key for update is ConfigName
+      // Primary Key for update is ConfigName:::ResolutionMode
       var ok = await sendUpdateRequest(clientID, tableName, values,
-          primaryKey: widget.global.rowSelected);
+          primaryKey: "${_selectedConfigName}:::${_selectedResolutionMode}");
       if (ok) {
         widget.global.subMode = SubModes.showTables;
         widget.callback();
@@ -428,7 +432,7 @@ class StateSpecPayload extends State<SpecPayload> {
                       _buildDropdown("Config Name", _configNames, _selectedConfigName, (val) => setState(() => _selectedConfigName = val)),
                       
                       // Resolution Mode (Dropdown)
-                      _buildDropdown("Resolution Mode", _resolutionModes, _selectedResolutionMode, (val) => setState(() => _selectedResolutionMode = val)),
+                      _buildDropdown("Resolution Mode", _resolutionModes, _selectedResolutionMode, (val) => setState(() => _selectedResolutionMode = val), required: false),
                       
                       _buildUnitField("On Time", _onTimeController, "msec"),
                       _buildFreqField("Center Frequency", _centerFreqController, _centerFreqUnit, (val) => setState(() => _centerFreqUnit = val!)),
@@ -482,15 +486,15 @@ class StateSpecPayload extends State<SpecPayload> {
     );
   }
 
-  Widget _buildDropdown(String label, List<String> items, String? value, ValueChanged<String?> onChanged) {
+  Widget _buildDropdown(String label, List<String> items, String? value, ValueChanged<String?> onChanged, {bool required = true}) {
     return SizedBox(
       width: 400,
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(labelText: label, filled: true, fillColor: Colors.grey.withOpacity(0.04), border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))),
         value: value,
-        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        items: items.map((e) => DropdownMenuItem(value: e, child: Text(e == '' ? 'NULL' : e))).toList(),
         onChanged: onChanged,
-        validator: (val) => val == null || val.isEmpty ? "Required" : null,
+        validator: required ? (val) => val == null || val.isEmpty ? "Required" : null : null,
       ),
     );
   }

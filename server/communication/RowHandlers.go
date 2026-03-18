@@ -277,6 +277,7 @@ func handleGetSpecTp(q *database.Queries, ctx context.Context, req utils.RowDisp
 	if err != nil {
 		return err
 	}
+	resp.Values = append(resp.Values, fmt.Sprintf("%v", row.TpID))
 	resp.Values = append(resp.Values, NullToString(row.TpName))
 	resp.Values = append(resp.Values, row.RxName)
 	resp.Values = append(resp.Values, row.TxName)
@@ -467,11 +468,22 @@ func handleGetLossMeasurementFrequencies(q *database.Queries, ctx context.Contex
 }
 
 func handleGetSpecPL(q *database.Queries, ctx context.Context, req utils.RowDisplayRequest, resp *utils.RowDetails) error {
-	row, err := q.GetSpecPLByConfig(ctx, req.PrimaryKey)
+	keys := strings.Split(req.PrimaryKey, ":::")
+	if len(keys) < 2 {
+		return fmt.Errorf("invalid primary key for SpecPL: expected ConfigName:::ResolutionMode")
+	}
+
+	arg := database.GetSpecPLByKeyParams{
+		ConfigName:     keys[0],
+		ResolutionMode: ToNullString(keys[1]),
+	}
+
+	row, err := q.GetSpecPLByKey(ctx, arg)
 	if err != nil {
 		return err
 	}
-	// Mapping SpecPL fields... (This is a huge struct)
+	// Mapping SpecPL fields...
+	resp.Values = append(resp.Values, fmt.Sprintf("%v", row.SpecID))
 	resp.Values = append(resp.Values, row.ConfigName)
 	resp.Values = append(resp.Values, NullToString(row.ResolutionMode))
 	resp.Values = append(resp.Values, fmt.Sprintf("%v", row.OnTime))

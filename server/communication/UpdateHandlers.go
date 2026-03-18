@@ -396,9 +396,9 @@ func NullToString(ns sql.NullString) string {
 
 func handleUpdateSpecTp(q *database.Queries, ctx context.Context, req utils.UpdateRequest) error {
 	arg := database.UpdateSpecTpParams{
-		TpName:   sql.NullString{String: req.Values[0], Valid: true},
-		RxName:   req.Values[1],
-		TxName:   req.Values[2],
+		TpName:   sql.NullString{String: req.Values[1], Valid: true},
+		RxName:   req.Values[2],
+		TxName:   req.Values[3],
 		TpName_2: sql.NullString{String: req.PrimaryKey, Valid: true},
 	}
 	return q.UpdateSpecTp(ctx, arg)
@@ -406,9 +406,9 @@ func handleUpdateSpecTp(q *database.Queries, ctx context.Context, req utils.Upda
 
 func handleInsertSpecTp(q *database.Queries, ctx context.Context, req utils.UpdateRequest) error {
 	arg := database.InsertSpecTpParams{
-		TpName: sql.NullString{String: req.Values[0], Valid: true},
-		RxName: req.Values[1],
-		TxName: req.Values[2],
+		TpName: sql.NullString{String: req.Values[1], Valid: true},
+		RxName: req.Values[2],
+		TxName: req.Values[3],
 	}
 	return q.InsertSpecTp(ctx, arg)
 }
@@ -983,9 +983,14 @@ func handleInsertLossMeasurementFrequencies(q *database.Queries, ctx context.Con
 }
 
 func handleUpdateSpecPL(q *database.Queries, ctx context.Context, req utils.UpdateRequest) error {
+	keys := strings.Split(req.PrimaryKey, ":::")
+	if len(keys) < 2 {
+		return fmt.Errorf("invalid primary key for SpecPL update: expected ConfigName:::ResolutionMode")
+	}
+
 	arg := database.UpdateSpecPLParams{
 		ConfigName:                  req.Values[0],
-		ResolutionMode:              sql.NullString{String: req.Values[1], Valid: true},
+		ResolutionMode:              ToNullString(req.Values[1]),
 		OnTime:                      parseFloat(req.Values[2]),
 		CenterFrequency:             parseFloat(req.Values[3]),
 		UplinkPower:                 parseFloat(req.Values[4]),
@@ -1029,7 +1034,8 @@ func handleUpdateSpecPL(q *database.Queries, ctx context.Context, req utils.Upda
 		ChirpRateDeviationTolerance: NullToFloat(req.Values[42]),
 		Ripple:                      NullToFloat(req.Values[43]),
 		RippleTolerance:             NullToFloat(req.Values[44]),
-		ConfigName_2:                req.PrimaryKey,
+		ConfigName_2:                keys[0],
+		ResolutionMode_2:            ToNullString(keys[1]),
 	}
 	return q.UpdateSpecPL(ctx, arg)
 }
@@ -1037,7 +1043,7 @@ func handleUpdateSpecPL(q *database.Queries, ctx context.Context, req utils.Upda
 func handleInsertSpecPL(q *database.Queries, ctx context.Context, req utils.UpdateRequest) error {
 	arg := database.InsertSpecPLParams{
 		ConfigName:                  req.Values[0],
-		ResolutionMode:              sql.NullString{String: req.Values[1], Valid: true},
+		ResolutionMode:              ToNullString(req.Values[1]),
 		OnTime:                      parseFloat(req.Values[2]),
 		CenterFrequency:             parseFloat(req.Values[3]),
 		UplinkPower:                 parseFloat(req.Values[4]),
@@ -1139,4 +1145,11 @@ func NullToFloat(val string) sql.NullFloat64 {
 	}
 	f, err := strconv.ParseFloat(val, 64)
 	return sql.NullFloat64{Float64: f, Valid: err == nil}
+}
+
+func ToNullString(val string) sql.NullString {
+	if val == "" || strings.EqualFold(val, "NULL") {
+		return sql.NullString{Valid: false}
+	}
+	return sql.NullString{String: val, Valid: true}
 }

@@ -186,7 +186,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	}
 	// Frequency Profile for CDMA Doppler Test
 	if modulation == "CDMA" {
-		query := `INSERT INTO FrequencyProfile(Name, MaxFrequency,StepSize,CommandingRequired,DopplerFile)VALUES (?,?,?,?,?)`
+		query := `INSERT OR IGNORE INTO FrequencyProfile(Name, MaxFrequency,StepSize,CommandingRequired,DopplerFile)VALUES (?,?,?,?,?)`
 		_, err = tx.Exec(query, "Doppler-CDMA", 125000.0, 25000.0, "Yes", "/umacs/umacsops/sarc/resources/doppler.csv")
 		if err != nil {
 			fmt.Println(err)
@@ -200,7 +200,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 
 	// Test Specific Profile for receiver in PowerProfile Table
 	if modulation == "FM" || modulation == "PSK" || modulation == "FSK" {
-		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		query := `INSERT OR IGNORE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err = tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
 		if err != nil {
 			fmt.Println(err)
@@ -211,7 +211,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 			}
 		}
 	} else if modulation == "PM" {
-		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		query := `INSERT OR IGNORE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err1 := tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
 		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
 		if err1 != nil || err2 != nil {
@@ -222,7 +222,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 			}
 		}
 	} else if modulation == "CDMA" {
-		query := `INSERT INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		query := `INSERT OR IGNORE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err = tx.Exec(query, "DopplerProfile", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
 		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
 		if err != nil || err2 != nil {
@@ -616,7 +616,7 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 	}
 }
 
-func autoPopulatePLRelated(db *sql.DB, plName string, freq float64, peakPower float64, avgPower float64) utils.Ack {
+func autoPopulatePLRelated(db *sql.DB, configName string, freq float64, peakPower float64, avgPower float64) utils.Ack {
 	tx, err := db.Begin()
 	if err != nil {
 		fmt.Println(err)
@@ -626,40 +626,11 @@ func autoPopulatePLRelated(db *sql.DB, plName string, freq float64, peakPower fl
 		}
 	}
 
-	statement, err := tx.Prepare("insert into SpecPL (ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, PulsePeriod, PulseWidth) values(?, ?, ?, ?, ?, ?, ?)")
-	if err != nil {
-		fmt.Println("Error inserting PL:", err)
-		tx.Rollback()
-		return utils.Ack{
-			OK:      false,
-			Message: "Error formatting query for PL :" + err.Error(),
-		}
-	}
-	defer statement.Close()
-
-	_, err = statement.Exec(plName, "Normal", 1.0, freq, -20.0, 1e-3, 1e-6) // Using freq, others still default for now
-	if err != nil {
-		fmt.Println("Error inserting PL:", err)
-		tx.Rollback()
-		return utils.Ack{
-			OK:      false,
-			Message: "Cannot Connect to Insert PL :" + err.Error(),
-		}
-	}
-
-	// Update with peak and average power if specified
-	if peakPower != 0 || avgPower != 0 {
-		_, err = tx.Exec("UPDATE SpecPL SET PeakPower = ?, AveragePower = ? WHERE ConfigName = ?", peakPower, avgPower, plName)
-		if err != nil {
-			fmt.Println("Error updating PL powers:", err)
-		}
-	}
-
 	// PulseProfile for payload
 	pulseQuery := `INSERT INTO PulseProfile(Name, TransientON, IQOn, AcquisitionTime, SweepTime, SweepCount,
 		FilterType, FilterBandwidth, YTop, ThresholdLevel, Hysterisis, PPMTriggerLevel, PPMReferenceLevel, PPMYDivision, PPMChannel)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-	_, err = tx.Exec(pulseQuery, plName+"-Pulse", 0.5, 0, 100, 0.01, 10,
+	_, err = tx.Exec(pulseQuery, configName+"-Pulse", 0.5, 0, 100, 0.01, 10,
 		"Gaussian", 1000000.0, -20.0, -40.0, 3.0, -30.0, -20.0, 10.0, "A")
 	if err != nil {
 		fmt.Println(err)
@@ -673,7 +644,7 @@ func autoPopulatePLRelated(db *sql.DB, plName string, freq float64, peakPower fl
 	// TRMProfile for payload
 	trmQuery := `INSERT INTO TRMProfile(Name, NoOfTRMs, TimePerTRMInSecs, DelayBeforeFirstReadInSecs)
 		VALUES (?,?,?,?)`
-	_, err = tx.Exec(trmQuery, plName+"-TRM", 5, 10.0, 2.0)
+	_, err = tx.Exec(trmQuery, configName+"-TRM", 5, 10.0, 2.0)
 	if err != nil {
 		fmt.Println(err)
 		tx.Rollback()
@@ -768,12 +739,36 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 			}
 		}
 
-		statement, err := tx.Prepare("insert into SpecPL (ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, PulsePeriod, PulseWidth, PeakPower, AveragePower) values(?, ?, ?, ?, ?, ?, ?, ?, ?)")
+		avgTxPower := peakPower - 6.0
+
+		query := `insert into SpecPL (
+            ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, 
+            PeakPower, PeakPowerTolerance, AveragePower, AveragePowerTolerance, 
+            DutyCycle, DutyCycleTolerance, PulsePeriod, PulsePeriodTolerance, 
+            ReplicaPeriod, ReplicaPeriodTolerance, PulseWidth, PulseWidthTolerance, 
+            PulseSeperation, PulseSeperationTolerance, RiseTime, RiseTimeTolerance, 
+            FallTime, FallTimeTolerance, AverageTxPower, AverageTxPowerTolerance, 
+            ChirpBandwidth, RepetitionRate,
+			ChirpBandwidthTolerance, RepetitionRateTolerance, ReplicaRate, ReplicaRateTolerance,
+			FrequencyShift, FrequencyShiftTolerance, Droop, DroopTolerance, Phase, PhaseTolerance,
+			Overshoot, OvershootTolerance, ChirpRate, ChirpRateTolerance, ChirpRateDeviation,
+			ChirpRateDeviationTolerance, Ripple, RippleTolerance
+        ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)`
+
+		statement, err := tx.Prepare(query)
 		if err != nil {
 			tx.Rollback()
 			return utils.Ack{OK: false, Message: "Error Preparing SpecPL: " + err.Error()}
 		}
-		_, err = statement.Exec(configName, resolutionMode, 1.0, freq, -20.0, 1e-3, 1e-6, peakPower, avgPower)
+		_, err = statement.Exec(
+			configName, ToNullString(resolutionMode), 1.0, freq, -20.0,
+			peakPower, 0.5, avgPower, 0.5,
+			25.0, 1.0, 3.6, 0.072,
+			0.0, 0.0, 0.9, 0.018,
+			2.7, 0.054, 0.001, 0.0,
+			0.001, 0.0, avgTxPower, 0.5,
+			400000.0, 250.0,
+		)
 		statement.Close()
 		if err != nil {
 			tx.Rollback()

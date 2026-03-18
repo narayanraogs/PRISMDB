@@ -89,10 +89,43 @@ func getTableDataWait(q *database.Queries, ctx context.Context, tableName string
 				rowStrings = append(rowStrings, fmt.Sprintf("%v", field.Interface()))
 			}
 			details.Rows = append(details.Rows, utils.Row{Details: rowStrings})
-			// Assume first column is primary key
-			if len(rowStrings) > 0 {
-				details.PrimaryKey = append(details.PrimaryKey, rowStrings[0])
+			// Build Primary Key
+			pk := ""
+			l := strings.ToLower(tableName)
+			switch {
+			case l == "specpl":
+				if len(rowStrings) > 2 {
+					pk = rowStrings[1] + ":::" + rowStrings[2]
+				}
+			case l == "spectpranging":
+				if len(rowStrings) > 2 {
+					pk = rowStrings[0] + ":::" + rowStrings[2]
+				}
+			case l == "spectxharmonics":
+				if len(rowStrings) > 3 {
+					pk = rowStrings[0] + ":::" + rowStrings[2] + ":::" + rowStrings[3]
+				}
+			case l == "spectxsubcarriers":
+				if len(rowStrings) > 2 {
+					pk = rowStrings[0] + ":::" + rowStrings[2]
+				}
+			case l == "uplinkloss" || l == "downlinkloss":
+				if len(rowStrings) > 1 {
+					pk = rowStrings[0] + ":::" + rowStrings[1]
+				}
+			case l == "spectx" || l == "specrx" || l == "spectp" || l == "configurations" || l == "devices" || l == "deviceprofile":
+				// These have ID at 0 and Name at 1. We use Name as PK for handlers.
+				if len(rowStrings) > 1 {
+					pk = rowStrings[1]
+				} else if len(rowStrings) > 0 {
+					pk = rowStrings[0]
+				}
+			default:
+				if len(rowStrings) > 0 {
+					pk = rowStrings[0]
+				}
 			}
+			details.PrimaryKey = append(details.PrimaryKey, pk)
 		}
 		details.OK = true
 	}

@@ -448,8 +448,12 @@ func deleteSpecPL(db *sql.DB, primaryKey string) utils.Ack {
 		ack.Message = "Invalid Primary Key for SpecPL"
 		return ack
 	}
-	query := "Delete from SpecPL where ConfigName like ? and ResolutionMode like ?"
-	_, err := db.Exec(query, values[0], values[1])
+	resMode := values[1]
+	if strings.EqualFold(resMode, "NULL") {
+		resMode = ""
+	}
+	query := "Delete from SpecPL where ConfigName = ? and COALESCE(ResolutionMode, '') = COALESCE(?, '')"
+	_, err := db.Exec(query, values[0], resMode)
 	if err != nil {
 		ack.OK = false
 		ack.Message = "Unable to Delete SpecPL Row: " + err.Error()

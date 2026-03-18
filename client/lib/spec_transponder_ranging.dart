@@ -10,8 +10,9 @@ import 'package:http/http.dart' as http;
 class SpecTransponderRanging extends StatefulWidget {
   final Global global;
   final VoidCallback callback;
+  final List<String>? initialData;
 
-  const SpecTransponderRanging(this.global, this.callback, {super.key});
+  const SpecTransponderRanging(this.global, this.callback, {this.initialData, super.key});
 
   @override
   State<SpecTransponderRanging> createState() => StateSpecTransponderRanging();
@@ -65,7 +66,11 @@ class StateSpecTransponderRanging extends State<SpecTransponderRanging> {
       return;
     }
     if (widget.global.rowSelected == '') {
-      setState(() {});
+      if (widget.initialData != null && widget.initialData!.isNotEmpty) {
+        _populateFromInitialData();
+      } else {
+        setState(() {});
+      }
       return;
     }
     RowDisplayRequest req = RowDisplayRequest();
@@ -113,6 +118,27 @@ class StateSpecTransponderRanging extends State<SpecTransponderRanging> {
   void initState() {
     super.initState();
     sendRequest();
+  }
+
+  void _populateFromInitialData() {
+    var data = widget.initialData!;
+    if (data.isNotEmpty && _tpNames.contains(data[0])) {
+      _tpName = data[0];
+    }
+    if (data.length > 1) _rangNameController.text = data[1];
+    if (data.length > 2) {
+      _freqController.text = data[2];
+      _freqResolution = 'Hz';
+    }
+    if (data.length > 3) _miToneRangingController.text = data[3];
+    if (data.length > 4) _miToneCmdController.text = data[4];
+    if (data.length > 5) _miCmdController.text = data[5];
+    if (data.length > 6) _miToneDLController.text = data[6];
+    if (data.length > 7) _miDevToneDLController.text = data[7];
+    if (data.length > 8 && _availableStates.contains(data[8])) {
+       _availableForCommanding = data[8];
+    }
+    setState(() {});
   }
 
   Widget getButton(BuildContext context) {

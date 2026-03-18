@@ -255,7 +255,7 @@ class StateCreate extends State<Create> {
     configTxNameSelected.add("");
     configTpNameSelected.add("");
     configPlNameSelected.add("");
-    configPlResolutionModes.add("Normal");
+    configPlResolutionModes.add("");
   }
 
   void removeConfigAt(int index) {
@@ -1402,21 +1402,18 @@ class StateCreate extends State<Create> {
                               decoration: _buildFlatInputDecoration(
                                 "Resolution Mode",
                               ),
-                              items: ["Normal", "High", "Low"].map((
-                                String value,
-                              ) {
+                              items: ["", "HR", "LR"].map((String value) {
                                 return DropdownMenuItem<String>(
                                   value: value,
                                   child: Text(
-                                    value,
+                                    value == "" ? "NULL" : value,
                                     style: const TextStyle(fontSize: 12),
                                   ),
                                 );
                               }).toList(),
                               onChanged: (value) {
                                 setState(() {
-                                  configPlResolutionModes[index] =
-                                      value ?? "Normal";
+                                  configPlResolutionModes[index] = value ?? "";
                                 });
                               },
                             ),

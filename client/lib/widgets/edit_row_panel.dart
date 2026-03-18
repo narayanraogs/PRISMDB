@@ -194,6 +194,7 @@ class _EditRowPanelState extends State<EditRowPanel> {
           ..tableSelected = Tables.specTransponderRanging
           ..rowSelected = widget.isCopy ? '' : selectedRow,
         widget.onComplete,
+        initialData: widget.initialRow,
       );
     }
 
@@ -282,10 +283,14 @@ class _EditRowPanelState extends State<EditRowPanel> {
     }
 
     if (widget.tableName.toLowerCase() == 'specpl') {
+      String selectedRow = '';
+      if (widget.initialRow != null && widget.initialRow!.length > 2) {
+        selectedRow = '${widget.initialRow![1]}:::${widget.initialRow![2]}';
+      }
       return SpecPayload(
         Global(clientID: _clientID)
           ..tableSelected = Tables.specPL
-          ..rowSelected = (widget.initialRow == null || widget.isCopy) ? '' : (widget.initialRow!.length > 1 ? widget.initialRow![1] : widget.initialRow![0]),
+          ..rowSelected = widget.isCopy ? '' : selectedRow,
         widget.onComplete,
         initialData: widget.initialRow,
       );

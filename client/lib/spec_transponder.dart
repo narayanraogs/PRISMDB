@@ -80,20 +80,18 @@ class StateSpecTransponder extends State<SpecTransponder> {
 
   void _populateFromInitialData() {
     var data = widget.initialData!;
-    // Server Schema: [ID, Name, RxName, TxName]
-    // We skip ID (index 0) for display fields
+    // Server Schema: [TpName, RxName, TxName]
     
-    if (data.length > 1) _nameController.text = data[1];
+    if (data.isNotEmpty) _nameController.text = data[0];
+    
+    if (data.length > 1) {
+      if (_rxNames.contains(data[1])) _rxName = data[1];
+    }
     
     if (data.length > 2) {
-      if (_rxNames.contains(data[2])) _rxName = data[2];
+      if (_txNames.contains(data[2])) _txName = data[2];
     }
     
-    if (data.length > 3) {
-      if (_txNames.contains(data[3])) _txName = data[3];
-    }
-    
-
     setState(() {});
   }
 

@@ -284,11 +284,16 @@ func (q *Queries) DeletePulseProfile(ctx context.Context, name string) error {
 }
 
 const deleteSpecPL = `-- name: DeleteSpecPL :exec
-DELETE FROM "SpecPL" WHERE "ConfigName" LIKE ?
+DELETE FROM "SpecPL" WHERE "ConfigName" LIKE ? AND COALESCE("ResolutionMode", '') LIKE COALESCE(?, '')
 `
 
-func (q *Queries) DeleteSpecPL(ctx context.Context, configname string) error {
-	_, err := q.db.ExecContext(ctx, deleteSpecPL, configname)
+type DeleteSpecPLParams struct {
+	ConfigName     string
+	ResolutionMode sql.NullString
+}
+
+func (q *Queries) DeleteSpecPL(ctx context.Context, arg DeleteSpecPLParams) error {
+	_, err := q.db.ExecContext(ctx, deleteSpecPL, arg.ConfigName, arg.ResolutionMode)
 	return err
 }
 
@@ -919,6 +924,69 @@ SELECT SpecID, ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower,
 
 func (q *Queries) GetSpecPLByConfig(ctx context.Context, configname string) (SpecPL, error) {
 	row := q.db.QueryRowContext(ctx, getSpecPLByConfig, configname)
+	var i SpecPL
+	err := row.Scan(
+		&i.SpecID,
+		&i.ConfigName,
+		&i.ResolutionMode,
+		&i.OnTime,
+		&i.CenterFrequency,
+		&i.UplinkPower,
+		&i.PeakPower,
+		&i.PeakPowerTolerance,
+		&i.AveragePower,
+		&i.AveragePowerTolerance,
+		&i.DutyCycle,
+		&i.DutyCycleTolerance,
+		&i.PulsePeriod,
+		&i.PulsePeriodTolerance,
+		&i.ReplicaPeriod,
+		&i.ReplicaPeriodTolerance,
+		&i.PulseWidth,
+		&i.PulseWidthTolerance,
+		&i.PulseSeperation,
+		&i.PulseSeperationTolerance,
+		&i.RiseTime,
+		&i.RiseTimeTolerance,
+		&i.FallTime,
+		&i.FallTimeTolerance,
+		&i.AverageTxPower,
+		&i.AverageTxPowerTolerance,
+		&i.ChirpBandwidth,
+		&i.ChirpBandwidthTolerance,
+		&i.RepetitionRate,
+		&i.RepetitionRateTolerance,
+		&i.ReplicaRate,
+		&i.ReplicaRateTolerance,
+		&i.FrequencyShift,
+		&i.FrequencyShiftTolerance,
+		&i.Droop,
+		&i.DroopTolerance,
+		&i.Phase,
+		&i.PhaseTolerance,
+		&i.Overshoot,
+		&i.OvershootTolerance,
+		&i.ChirpRate,
+		&i.ChirpRateTolerance,
+		&i.ChirpRateDeviation,
+		&i.ChirpRateDeviationTolerance,
+		&i.Ripple,
+		&i.RippleTolerance,
+	)
+	return i, err
+}
+
+const getSpecPLByKey = `-- name: GetSpecPLByKey :one
+SELECT SpecID, ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, PeakPower, PeakPowerTolerance, AveragePower, AveragePowerTolerance, DutyCycle, DutyCycleTolerance, PulsePeriod, PulsePeriodTolerance, ReplicaPeriod, ReplicaPeriodTolerance, PulseWidth, PulseWidthTolerance, PulseSeperation, PulseSeperationTolerance, RiseTime, RiseTimeTolerance, FallTime, FallTimeTolerance, AverageTxPower, AverageTxPowerTolerance, ChirpBandwidth, ChirpBandwidthTolerance, RepetitionRate, RepetitionRateTolerance, ReplicaRate, ReplicaRateTolerance, FrequencyShift, FrequencyShiftTolerance, Droop, DroopTolerance, Phase, PhaseTolerance, Overshoot, OvershootTolerance, ChirpRate, ChirpRateTolerance, ChirpRateDeviation, ChirpRateDeviationTolerance, Ripple, RippleTolerance FROM "SpecPL" WHERE "ConfigName" = ? AND COALESCE("ResolutionMode", '') = COALESCE(?, '')
+`
+
+type GetSpecPLByKeyParams struct {
+	ConfigName     string
+	ResolutionMode sql.NullString
+}
+
+func (q *Queries) GetSpecPLByKey(ctx context.Context, arg GetSpecPLByKeyParams) (SpecPL, error) {
+	row := q.db.QueryRowContext(ctx, getSpecPLByKey, arg.ConfigName, arg.ResolutionMode)
 	var i SpecPL
 	err := row.Scan(
 		&i.SpecID,
@@ -3600,7 +3668,7 @@ func (q *Queries) UpdatePulseProfile(ctx context.Context, arg UpdatePulseProfile
 }
 
 const updateSpecPL = `-- name: UpdateSpecPL :exec
-UPDATE "SpecPL" SET "ConfigName" = ?, "ResolutionMode" = ?, "OnTime" = ?, "CenterFrequency" = ?, "UplinkPower" = ?, "PeakPower" = ?, "PeakPowerTolerance" = ?, "AveragePower" = ?, "AveragePowerTolerance" = ?, "DutyCycle" = ?, "DutyCycleTolerance" = ?, "PulsePeriod" = ?, "PulsePeriodTolerance" = ?, "ReplicaPeriod" = ?, "ReplicaPeriodTolerance" = ?, "PulseWidth" = ?, "PulseWidthTolerance" = ?, "PulseSeperation" = ?, "PulseSeperationTolerance" = ?, "RiseTime" = ?, "RiseTimeTolerance" = ?, "FallTime" = ?, "FallTimeTolerance" = ?, "AverageTxPower" = ?, "AverageTxPowerTolerance" = ?, "ChirpBandwidth" = ?, "ChirpBandwidthTolerance" = ?, "RepetitionRate" = ?, "RepetitionRateTolerance" = ?, "ReplicaRate" = ?, "ReplicaRateTolerance" = ?, "FrequencyShift" = ?, "FrequencyShiftTolerance" = ?, "Droop" = ?, "DroopTolerance" = ?, "Phase" = ?, "PhaseTolerance" = ?, "Overshoot" = ?, "OvershootTolerance" = ?, "ChirpRate" = ?, "ChirpRateTolerance" = ?, "ChirpRateDeviation" = ?, "ChirpRateDeviationTolerance" = ?, "Ripple" = ?, "RippleTolerance" = ? WHERE "ConfigName" = ?
+UPDATE "SpecPL" SET "ConfigName" = ?, "ResolutionMode" = ?, "OnTime" = ?, "CenterFrequency" = ?, "UplinkPower" = ?, "PeakPower" = ?, "PeakPowerTolerance" = ?, "AveragePower" = ?, "AveragePowerTolerance" = ?, "DutyCycle" = ?, "DutyCycleTolerance" = ?, "PulsePeriod" = ?, "PulsePeriodTolerance" = ?, "ReplicaPeriod" = ?, "ReplicaPeriodTolerance" = ?, "PulseWidth" = ?, "PulseWidthTolerance" = ?, "PulseSeperation" = ?, "PulseSeperationTolerance" = ?, "RiseTime" = ?, "RiseTimeTolerance" = ?, "FallTime" = ?, "FallTimeTolerance" = ?, "AverageTxPower" = ?, "AverageTxPowerTolerance" = ?, "ChirpBandwidth" = ?, "ChirpBandwidthTolerance" = ?, "RepetitionRate" = ?, "RepetitionRateTolerance" = ?, "ReplicaRate" = ?, "ReplicaRateTolerance" = ?, "FrequencyShift" = ?, "FrequencyShiftTolerance" = ?, "Droop" = ?, "DroopTolerance" = ?, "Phase" = ?, "PhaseTolerance" = ?, "Overshoot" = ?, "OvershootTolerance" = ?, "ChirpRate" = ?, "ChirpRateTolerance" = ?, "ChirpRateDeviation" = ?, "ChirpRateDeviationTolerance" = ?, "Ripple" = ?, "RippleTolerance" = ? WHERE "ConfigName" = ? AND COALESCE("ResolutionMode", '') = COALESCE(?, '')
 `
 
 type UpdateSpecPLParams struct {
@@ -3650,6 +3718,7 @@ type UpdateSpecPLParams struct {
 	Ripple                      sql.NullFloat64
 	RippleTolerance             sql.NullFloat64
 	ConfigName_2                string
+	ResolutionMode_2            sql.NullString
 }
 
 func (q *Queries) UpdateSpecPL(ctx context.Context, arg UpdateSpecPLParams) error {
@@ -3700,6 +3769,7 @@ func (q *Queries) UpdateSpecPL(ctx context.Context, arg UpdateSpecPLParams) erro
 		arg.Ripple,
 		arg.RippleTolerance,
 		arg.ConfigName_2,
+		arg.ResolutionMode_2,
 	)
 	return err
 }
