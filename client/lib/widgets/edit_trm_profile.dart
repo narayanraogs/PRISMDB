@@ -64,7 +64,7 @@ class _EditTRMProfileState extends State<EditTRMProfile> {
       req.primaryKey = widget.global.rowSelected; // For TRMProfile, rowSelected should be the Name
 
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(req.toJSON()),
       );

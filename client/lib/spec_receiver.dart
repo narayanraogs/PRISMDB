@@ -57,7 +57,7 @@ class StateSpecReceiver extends State<SpecReceiver> {
     req.primaryKey = widget.global.rowSelected;
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

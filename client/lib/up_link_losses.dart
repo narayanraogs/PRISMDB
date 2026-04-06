@@ -48,7 +48,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
       txReq.id = widget.global.clientID;
       txReq.key = widget.global.tableSelected == Tables.uplinkLoss ? "UplinkConfigs" : "DownlinkConfigs";
       final txResp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -76,7 +76,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
       rxReq.id = widget.global.clientID;
       rxReq.key = "TestPhases";
       final rxResp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -114,7 +114,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
       }
 
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -735,7 +735,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
 
         try {
           final response = await http.post(
-            Uri.parse('http://127.0.0.1:8085/getRows'),
+            Uri.parse('${Uri.base.origin}/getRows'),
             headers: {'Content-Type': 'application/json; charset=UTF-8'},
             body: jsonEncode(req.toJSON()),
           );

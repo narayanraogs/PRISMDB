@@ -43,7 +43,7 @@ class StateSpecTransponder extends State<SpecTransponder> {
       // Fetch Tx Names
       ValueRequest txReq = ValueRequest()..id = widget.global.clientID..key = "TxNames";
       final txResp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(txReq.toJSON()),
       );
@@ -59,7 +59,7 @@ class StateSpecTransponder extends State<SpecTransponder> {
       // Fetch Rx Names
       ValueRequest rxReq = ValueRequest()..id = widget.global.clientID..key = "RxNames";
       final rxResp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(rxReq.toJSON()),
       );

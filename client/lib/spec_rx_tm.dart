@@ -37,7 +37,7 @@ class StateSpecRxTM extends State<SpecRxTM> {
     txReq.id = widget.global.clientID;
     txReq.key = "RxNames";
     final txResp = await http.post(
-      Uri.parse('http://127.0.0.1:8085/getValues'),
+      Uri.parse('${Uri.base.origin}/getValues'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -72,7 +72,7 @@ class StateSpecRxTM extends State<SpecRxTM> {
     req.primaryKey = widget.global.rowSelected;
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -123,7 +123,7 @@ class StateSpecRxTM extends State<SpecRxTM> {
     txReq.id = widget.global.clientID;
     txReq.key = "RxNames";
     final txResp = await http.post(
-      Uri.parse('http://127.0.0.1:8085/getValues'),
+      Uri.parse('${Uri.base.origin}/getValues'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -462,7 +462,7 @@ class StateSpecRxTM extends State<SpecRxTM> {
     txReq.id = widget.global.clientID;
     txReq.key = "RxModulation:::$rxName";
     final txResp = await http.post(
-      Uri.parse('http://127.0.0.1:8085/getSingleValue'),
+      Uri.parse('${Uri.base.origin}/getSingleValue'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

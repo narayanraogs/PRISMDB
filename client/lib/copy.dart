@@ -37,7 +37,7 @@ class StateCopy extends State<Copy> {
       valReq.id = widget.global.clientID;
       valReq.key = "RxNames";
       var resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -63,7 +63,7 @@ class StateCopy extends State<Copy> {
       valReq.id = widget.global.clientID;
       valReq.key = "TxNames";
       resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -89,7 +89,7 @@ class StateCopy extends State<Copy> {
       valReq.id = widget.global.clientID;
       valReq.key = "TpNames";
       resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -115,7 +115,7 @@ class StateCopy extends State<Copy> {
       valReq.id = widget.global.clientID;
       valReq.key = "ConfigNames";
       resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -244,7 +244,7 @@ class StateCopy extends State<Copy> {
       valReq.oldName = _selectedRx;
       valReq.newName = _rxController.text;
       var resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+        Uri.parse('${Uri.base.origin}/bulkAlter'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -278,7 +278,7 @@ class StateCopy extends State<Copy> {
       valReq.oldName = _selectedTx;
       valReq.newName = _txController.text;
       var resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+        Uri.parse('${Uri.base.origin}/bulkAlter'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -312,7 +312,7 @@ class StateCopy extends State<Copy> {
       valReq.oldName = _selectedTP;
       valReq.newName = _tpController.text;
       var resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+        Uri.parse('${Uri.base.origin}/bulkAlter'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -346,7 +346,7 @@ class StateCopy extends State<Copy> {
       valReq.oldName = _selectedConfig;
       valReq.newName = _configController.text;
       var resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+        Uri.parse('${Uri.base.origin}/bulkAlter'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

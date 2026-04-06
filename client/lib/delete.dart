@@ -33,7 +33,7 @@ class StateDelete extends State<Delete> {
       valReq.id = widget.global.clientID;
       valReq.key = "RxNames";
       var resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -59,7 +59,7 @@ class StateDelete extends State<Delete> {
       valReq.id = widget.global.clientID;
       valReq.key = "TxNames";
       resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -85,7 +85,7 @@ class StateDelete extends State<Delete> {
       valReq.id = widget.global.clientID;
       valReq.key = "TpNames";
       resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -111,7 +111,7 @@ class StateDelete extends State<Delete> {
       valReq.id = widget.global.clientID;
       valReq.key = "ConfigNames";
       resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -255,7 +255,7 @@ class StateDelete extends State<Delete> {
                   valReq.oldName = _selectedRx;
                   valReq.newName = "";
                   var resp = await http.post(
-                    Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+                    Uri.parse('${Uri.base.origin}/bulkAlter'),
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
                     },
@@ -319,7 +319,7 @@ class StateDelete extends State<Delete> {
                   valReq.oldName = _selectedTx;
                   valReq.newName = "";
                   var resp = await http.post(
-                    Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+                    Uri.parse('${Uri.base.origin}/bulkAlter'),
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
                     },
@@ -383,7 +383,7 @@ class StateDelete extends State<Delete> {
                   valReq.oldName = _selectedTP;
                   valReq.newName = "";
                   var resp = await http.post(
-                    Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+                    Uri.parse('${Uri.base.origin}/bulkAlter'),
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
                     },
@@ -447,7 +447,7 @@ class StateDelete extends State<Delete> {
                   valReq.oldName = _selectedConfig;
                   valReq.newName = "";
                   var resp = await http.post(
-                    Uri.parse('http://127.0.0.1:8085/bulkAlter'),
+                    Uri.parse('${Uri.base.origin}/bulkAlter'),
                     headers: <String, String>{
                       'Content-Type': 'application/json; charset=UTF-8',
                     },

@@ -60,7 +60,7 @@ class _EditDeviceProfileState extends State<EditDeviceProfile> {
       tabReq.tableName = "Devices";
       
       final response = await http.post(
-        Uri.parse('http://localhost:8085/getTables'),
+        Uri.parse('${Uri.base.origin}/getTables'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(tabReq.toJSON()),
       );

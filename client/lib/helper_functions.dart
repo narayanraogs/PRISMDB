@@ -188,7 +188,7 @@ Future<bool> sendAddRequest(
   req.values.addAll(values);
   try {
     final response = await http.post(
-      Uri.parse('http://localhost:8085/addRow'),
+      Uri.parse('${Uri.base.origin}/addRow'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -218,7 +218,7 @@ Future<bool> sendUpdateRequest(
   req.values.addAll(values);
   try {
     final response = await http.post(
-      Uri.parse('http://localhost:8085/updateRow'),
+      Uri.parse('${Uri.base.origin}/updateRow'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -246,7 +246,7 @@ Future<bool> sendDeleteRequest(
   req.primaryKey = primaryKey;
   try {
     final response = await http.post(
-      Uri.parse('http://localhost:8085/deleteRow'),
+      Uri.parse('${Uri.base.origin}/deleteRow'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

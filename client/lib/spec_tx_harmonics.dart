@@ -38,7 +38,7 @@ class StateSpecTxHarmonics extends State<SpecTxHarmonics> {
     txReq.id = widget.global.clientID;
     txReq.key = "TxNames";
     final txResp = await http.post(
-      Uri.parse('http://127.0.0.1:8085/getValues'),
+      Uri.parse('${Uri.base.origin}/getValues'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -70,7 +70,7 @@ class StateSpecTxHarmonics extends State<SpecTxHarmonics> {
     req.primaryKey = widget.global.rowSelected;
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

@@ -44,7 +44,7 @@ class StateSpecTransponderRanging extends State<SpecTransponderRanging> {
     tpReq.id = widget.global.clientID;
     tpReq.key = "TPNames";
     final tpResp = await http.post(
-      Uri.parse('http://127.0.0.1:8085/getValues'),
+      Uri.parse('${Uri.base.origin}/getValues'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -80,7 +80,7 @@ class StateSpecTransponderRanging extends State<SpecTransponderRanging> {
     req.primaryKey = widget.global.rowSelected;
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

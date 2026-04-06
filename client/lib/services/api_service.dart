@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/app_models.dart';
 import '../structures.dart';
 
-const String _baseUrl = 'http://localhost:8085';
+final String _baseUrl = Uri.base.origin;
 
 class ApiService {
   Future<bool> registerClient(String id, String dbName, bool fromConfig) async {

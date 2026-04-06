@@ -109,7 +109,7 @@ class _EditTestsState extends State<EditTests> {
       tabReq.tableName = "Configurations";
       
       final response = await http.post(
-        Uri.parse('http://localhost:8085/getTables'),
+        Uri.parse('${Uri.base.origin}/getTables'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(tabReq.toJSON()),
       );
@@ -174,7 +174,7 @@ class _EditTestsState extends State<EditTests> {
       tabReq.tableName = tableName;
       
       final response = await http.post(
-        Uri.parse('http://localhost:8085/getTables'),
+        Uri.parse('${Uri.base.origin}/getTables'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(tabReq.toJSON()),
       );

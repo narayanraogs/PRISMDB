@@ -48,7 +48,7 @@ class StateSpecTxSubcarriers extends State<SpecTxSubcarriers> {
     txReq.id = widget.global.clientID;
     txReq.key = "TxNames";
     final txResp = await http.post(
-      Uri.parse('http://127.0.0.1:8085/getValues'),
+      Uri.parse('${Uri.base.origin}/getValues'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },
@@ -81,7 +81,7 @@ class StateSpecTxSubcarriers extends State<SpecTxSubcarriers> {
     req.primaryKey = widget.global.rowSelected;
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -469,7 +469,7 @@ class StateSpecTxSubcarriers extends State<SpecTxSubcarriers> {
     txReq.id = widget.global.clientID;
     txReq.key = "TxModulation:::$txName";
     final txResp = await http.post(
-      Uri.parse('http://127.0.0.1:8085/getSingleValue'),
+      Uri.parse('${Uri.base.origin}/getSingleValue'),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
       },

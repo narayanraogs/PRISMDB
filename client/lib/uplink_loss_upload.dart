@@ -35,7 +35,7 @@ class StateUpLinkLossUpload extends State<UpLinkLossUpload> {
       valReq.id = widget.global.clientID;
       valReq.key = "UplinkConfigs";
       final resp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getValues'),
+        Uri.parse('${Uri.base.origin}/getValues'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -64,7 +64,7 @@ class StateUpLinkLossUpload extends State<UpLinkLossUpload> {
       valReqTP.id = widget.global.clientID;
       valReqTP.key = "SelectedTestPhase";
       final respTp = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getSingleValue'),
+        Uri.parse('${Uri.base.origin}/getSingleValue'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -99,7 +99,7 @@ class StateUpLinkLossUpload extends State<UpLinkLossUpload> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://127.0.0.1:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },

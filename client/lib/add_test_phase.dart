@@ -82,7 +82,7 @@ class StateAddTestPhase extends State<AddTestPhase> {
     
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:8085/getRows'),
+        Uri.parse('${Uri.base.origin}/getRows'),
         headers: {'Content-Type': 'application/json; charset=UTF-8'},
         body: jsonEncode(req.toJSON()),
       );
