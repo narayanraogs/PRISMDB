@@ -246,7 +246,6 @@ class StateSpecPayload extends State<SpecPayload> {
         if (temp.ok) {
             if (temp.values.length >= 46) {
              List<String> data = temp.values;
-             
              if (_configNames.contains(data[1])) {
                  _selectedConfigName = data[1];
              } else if (data[1].isNotEmpty) {
@@ -389,9 +388,8 @@ class StateSpecPayload extends State<SpecPayload> {
     values.add(_rippleTolController.text);
 
     if (edit) {
-      // Primary Key for update is ConfigName:::ResolutionMode
       var ok = await sendUpdateRequest(clientID, tableName, values,
-          primaryKey: "${_selectedConfigName}:::${_selectedResolutionMode}");
+          primaryKey: widget.global.rowSelected);
       if (ok) {
         widget.global.subMode = SubModes.showTables;
         widget.callback();
@@ -485,6 +483,8 @@ class StateSpecPayload extends State<SpecPayload> {
        ),
     );
   }
+
+
 
   Widget _buildDropdown(String label, List<String> items, String? value, ValueChanged<String?> onChanged, {bool required = true}) {
     return SizedBox(

@@ -627,17 +627,21 @@ func autoPopulatePLRelated(db *sql.DB, configName string, freq float64, peakPowe
 	}
 
 	// PulseProfile for payload
-	pulseQuery := `INSERT INTO PulseProfile(Name, TransientON, IQOn, AcquisitionTime, SweepTime, SweepCount,
+	pulseQuery := `INSERT OR IGNORE INTO PulseProfile(Name, TransientON, IQOn, AcquisitionTime, SweepTime, SweepCount,
 		FilterType, FilterBandwidth, YTop, ThresholdLevel, Hysterisis, PPMTriggerLevel, PPMReferenceLevel, PPMYDivision, PPMChannel)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-	_, err = tx.Exec(pulseQuery, configName+"-Pulse", 0.5, 0, 100, 0.01, 10,
-		"Gaussian", 1000000.0, -20.0, -40.0, 3.0, -30.0, -20.0, 10.0, "A")
-	if err != nil {
-		fmt.Println(err)
-		tx.Rollback()
-		return utils.Ack{
-			OK:      false,
-			Message: "Unable to insert in PulseProfile Table: " + err.Error(),
+
+	profiles := []string{"PPM-Profile", "VSA-Profile", "VSA-Profile-HR", configName + "-Pulse"}
+	for _, pName := range profiles {
+		_, err = tx.Exec(pulseQuery, pName, 0.5, 0, 100, 0.01, 10,
+			"Gaussian", 1000000.0, -20.0, -40.0, 3.0, -30.0, -20.0, 10.0, "A")
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				OK:      false,
+				Message: "Unable to insert in PulseProfile Table: " + err.Error(),
+			}
 		}
 	}
 
@@ -805,6 +809,9 @@ func populateTests(tx *sql.Tx, configType string, configName string, rxName stri
 	}
 	if strings.EqualFold(configType, "Rx") {
 		return populateRxTestsForConfig(tx, configName, rxName)
+	}
+	if strings.EqualFold(configType, "PL") {
+		return populatePlTestsForConfig(tx, configName)
 	}
 	return utils.Ack{OK: true}
 }
@@ -1000,6 +1007,40 @@ func populateTpTestsForConfig(tx *sql.Tx, configName string, tpName string) util
 
 }
 
+func populatePlTestsForConfig(tx *sql.Tx, configName string) utils.Ack {
+	var ppm sql.NullString
+	ppm.Valid = true
+	ppm.String = "PPM"
+	var vsa sql.NullString
+	vsa.Valid = true
+	vsa.String = "VSA"
+
+	plTestTypes := []string{"PulseMeasurement", "PulseAnalysis", "HighResolutionPulse"}
+	plTestCategories := []sql.NullString{ppm, vsa, vsa}
+
+	for i := range len(plTestTypes) {
+		values := getDefaultForPlTests(plTestTypes[i], plTestCategories[i], configName)
+		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
+						PulseProfileName )
+						VALUES (?,?,?,?,?,?,?,?,?)`
+		_, err := tx.Exec(query, configName, plTestTypes[i], plTestCategories[i], values[0], values[1], values[2], values[4], values[3],
+			values[6])
+		if err != nil {
+			fmt.Println(err)
+			tx.Rollback()
+			return utils.Ack{
+				Message: "Unable to insert Pl Tests ",
+				OK:      false,
+			}
+		}
+	}
+	return utils.Ack{
+		Message: "",
+		OK:      true,
+	}
+}
+
 func getDefaultForRxTests(testType string, testCategory sql.NullString, rxName string) []sql.NullString {
 	var ulSpectrum sql.NullString
 	var dlSpectrum sql.NullString
@@ -1123,6 +1164,52 @@ func getDefaultForTpTests(testType string, _ sql.NullString, tpName string) []sq
 	} else {
 		power.Valid = true
 		power.String = "RxNominal"
+	}
+
+	var values = make([]sql.NullString, 0)
+	values = append(values, ulSpectrum, dlSpectrum, power, obwPower, loopStress, device, tm)
+	return values
+}
+
+func getDefaultForPlTests(testType string, testCategory sql.NullString, configName string) []sql.NullString {
+	var ulSpectrum sql.NullString
+	var dlSpectrum sql.NullString
+	var power sql.NullString
+	var obwPower sql.NullString
+	var loopStress sql.NullString
+	var device sql.NullString
+	var tm sql.NullString
+
+	ulSpectrum.Valid = false
+	power.Valid = false
+	obwPower.Valid = false
+	loopStress.Valid = false
+
+	device.Valid = true
+	device.String = "Default"
+
+	dlSpectrum.Valid = true
+	if testType == "HighResolutionPulse" {
+		dlSpectrum.String = "Scat-Downlink-HR"
+	} else {
+		dlSpectrum.String = "Scat-Downlink"
+	}
+
+	tm.Valid = true
+	if testCategory.String == "PPM" {
+		if strings.HasSuffix(configName, "-A") {
+			tm.String = "PPM-ProfileA"
+		} else if strings.HasSuffix(configName, "-B") {
+			tm.String = "PPM-ProfileB"
+		} else {
+			tm.String = "PPM-Profile"
+		}
+	} else if testCategory.String == "VSA" {
+		if testType == "HighResolutionPulse" {
+			tm.String = "VSA-Profile-HR"
+		} else {
+			tm.String = "VSA-Profile"
+		}
 	}
 
 	var values = make([]sql.NullString, 0)
@@ -1258,6 +1345,12 @@ func getDefaultConfigs(configType string) ([]sql.NullString, sql.NullInt32) {
 		tsmCfgName.Valid = true
 		pmChannel.String = "A"
 		pmChannel.Valid = true
+	} else if strings.EqualFold(configType, "PL") {
+		tsmCfgName.String = "PL-Sample"
+		tsmCfgName.Valid = true
+		cortexIFM.Valid = false
+		intFreq.Valid = false
+		progAttnUsed.Valid = false
 	} else {
 		tsmCfgName.String = "Tp-Sample"
 		tsmCfgName.Valid = true
