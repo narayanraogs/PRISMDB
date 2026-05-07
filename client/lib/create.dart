@@ -60,6 +60,12 @@ class StateCreate extends State<Create> {
     text: '0',
   );
 
+  List<String> deletedRxNames = [];
+  List<String> deletedTxNames = [];
+  List<String> deletedTpNames = [];
+  List<String> deletedPlNames = [];
+  List<String> deletedConfigNames = [];
+
   List<TextEditingController> rxNames = [];
   List<TextEditingController> rxFreqs = [];
   List<String> rxFreqUnits = [];
@@ -168,6 +174,9 @@ class StateCreate extends State<Create> {
   }
 
   void removeRxAt(int index) {
+    if (rxNames[index].text.isNotEmpty) {
+      deletedRxNames.add(rxNames[index].text);
+    }
     rxNames.removeAt(index);
     rxFreqs.removeAt(index);
     rxFreqUnits.removeAt(index);
@@ -194,6 +203,9 @@ class StateCreate extends State<Create> {
   }
 
   void removeTxAt(int index) {
+    if (txNames[index].text.isNotEmpty) {
+      deletedTxNames.add(txNames[index].text);
+    }
     txNames.removeAt(index);
     txFreqs.removeAt(index);
     txFreqUnits.removeAt(index);
@@ -215,6 +227,9 @@ class StateCreate extends State<Create> {
   }
 
   void removeTpAt(int index) {
+    if (tpNames[index].text.isNotEmpty) {
+      deletedTpNames.add(tpNames[index].text);
+    }
     tpNames.removeAt(index);
     tpRxNameSelected.removeAt(index);
     tpTxNameSelected.removeAt(index);
@@ -235,6 +250,9 @@ class StateCreate extends State<Create> {
   }
 
   void removePlAt(int index) {
+    if (plNames[index].text.isNotEmpty) {
+      deletedPlNames.add(plNames[index].text);
+    }
     plNames.removeAt(index);
     plFreqs.removeAt(index);
     plFreqUnits.removeAt(index);
@@ -259,6 +277,9 @@ class StateCreate extends State<Create> {
   }
 
   void removeConfigAt(int index) {
+    if (configNames[index].text.isNotEmpty) {
+      deletedConfigNames.add(configNames[index].text);
+    }
     configNames.removeAt(index);
     configTypes.removeAt(index);
     configRxNameSelected.removeAt(index);
@@ -316,6 +337,12 @@ class StateCreate extends State<Create> {
     req.configPlNames = configPlNameSelected;
     req.configPlResolutionModes = configPlResolutionModes;
 
+    req.deletedRxNames = deletedRxNames;
+    req.deletedTxNames = deletedTxNames;
+    req.deletedTpNames = deletedTpNames;
+    req.deletedPlNames = deletedPlNames;
+    req.deletedConfigNames = deletedConfigNames;
+
     try {
       final response = await http.post(
         Uri.parse('${Uri.base.origin}/autoPopulate'),
@@ -338,6 +365,134 @@ class StateCreate extends State<Create> {
       }
     } catch (e) {
       showMessage(e.toString(), true);
+    }
+  }
+
+  Future<void> _loadExistingCards() async {
+    String path = dbName.text;
+    if (path.isEmpty) return;
+
+    try {
+      final responseReg = await http.post(
+        Uri.parse('${Uri.base.origin}/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'ID': 'client_create', 'DBName': path, 'Create': false, 'FromConfig': false}),
+      );
+      if (responseReg.statusCode != 200) {
+        showMessage("Failed to connect to db", true);
+        return;
+      }
+      var ack = Ack.fromJson(jsonDecode(responseReg.body));
+      if (!ack.ok) {
+        showMessage("Failed to open db: ${ack.message}", true);
+        return;
+      }
+
+      Future<List<RowDetails>> fetchTable(String tableName) async {
+        final res = await http.post(
+          Uri.parse('${Uri.base.origin}/getTables'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'ID': 'client_create', 'TableName': tableName}),
+        );
+        if (res.statusCode == 200) {
+          var details = TableDisplayDetails.fromJson(jsonDecode(res.body));
+          if (details.ok) return details.details;
+        }
+        return [];
+      }
+
+      var rxRows = await fetchTable("SpecRx");
+      var txRows = await fetchTable("SpecTx");
+      var tpRows = await fetchTable("SpecTp");
+      var configRows = await fetchTable("Configurations");
+      var plRows = await fetchTable("SpecPL");
+
+      setState(() {
+        deletedRxNames.clear();
+        deletedTxNames.clear();
+        deletedTpNames.clear();
+        deletedPlNames.clear();
+        deletedConfigNames.clear();
+
+        rxNames.clear(); rxFreqs.clear(); rxFreqUnits.clear(); rxSelModulation.clear(); rxModulations.clear();
+        for (var row in rxRows) {
+          if (row.details.length < 6) continue;
+          rxNames.add(TextEditingController(text: row.details[1]));
+          double freq = double.tryParse(row.details[2]) ?? 0;
+          rxFreqs.add(TextEditingController(text: (freq / 1e6).toString()));
+          rxFreqUnits.add("MHz");
+          String mod = row.details[5];
+          rxSelModulation.add(mod);
+          int index = rxSelModulation.length - 1;
+          rxModulations.add(ModulationDropdown((val) => rxSelModulation[index] = val, selected: mod));
+        }
+        noOfRxController.text = rxNames.length.toString();
+
+        txNames.clear(); txFreqs.clear(); txFreqUnits.clear(); txPowers.clear(); txSelModulation.clear(); txModulations.clear();
+        for (var row in txRows) {
+          if (row.details.length < 9) continue;
+          txNames.add(TextEditingController(text: row.details[1]));
+          double freq = double.tryParse(row.details[2]) ?? 0;
+          txFreqs.add(TextEditingController(text: (freq / 1e6).toString()));
+          txFreqUnits.add("MHz");
+          txPowers.add(TextEditingController(text: row.details[3]));
+          String mod = row.details[8];
+          txSelModulation.add(mod);
+          int index = txSelModulation.length - 1;
+          txModulations.add(ModulationDropdown((val) => txSelModulation[index] = val, selected: mod));
+        }
+        noOfTxController.text = txNames.length.toString();
+
+        tpNames.clear(); tpRxNameSelected.clear(); tpTxNameSelected.clear();
+        for (var row in tpRows) {
+          if (row.details.length < 4) continue;
+          tpNames.add(TextEditingController(text: row.details[1]));
+          tpRxNameSelected.add(row.details[2] == "NULL" ? "" : row.details[2]);
+          tpTxNameSelected.add(row.details[3] == "NULL" ? "" : row.details[3]);
+        }
+        noOfTpController.text = tpNames.length.toString();
+
+        plNames.clear(); plFreqs.clear(); plFreqUnits.clear(); plPeakPowers.clear(); plAveragePowers.clear();
+        Map<String, String> configToPayload = {};
+        for(var row in configRows) {
+            if(row.details.length >= 7 && row.details[2] == "PL" && row.details[6] != "NULL") {
+                configToPayload[row.details[1]] = row.details[6];
+            }
+        }
+
+        for (var row in plRows) {
+          if (row.details.length < 9) continue;
+          String configName = row.details[1];
+          String payloadName = configToPayload[configName] ?? configName;
+          
+          if (!plNames.map((e) => e.text).contains(payloadName)) {
+            plNames.add(TextEditingController(text: payloadName));
+            double freq = double.tryParse(row.details[4]) ?? 0;
+            plFreqs.add(TextEditingController(text: (freq / 1e6).toString()));
+            plFreqUnits.add("MHz");
+            plPeakPowers.add(TextEditingController(text: row.details[6]));
+            plAveragePowers.add(TextEditingController(text: row.details[8]));
+          }
+        }
+        noOfPlController.text = plNames.length.toString();
+
+        configNames.clear(); configTypes.clear(); configRxNameSelected.clear(); configTxNameSelected.clear(); configTpNameSelected.clear(); configPlNameSelected.clear(); configPlResolutionModes.clear();
+        for (var row in configRows) {
+          if (row.details.length < 8) continue;
+          configNames.add(TextEditingController(text: row.details[1]));
+          configTypes.add(row.details[2]);
+          configRxNameSelected.add(row.details[3] == "NULL" ? "" : row.details[3]);
+          configTxNameSelected.add(row.details[4] == "NULL" ? "" : row.details[4]);
+          configTpNameSelected.add(row.details[5] == "NULL" ? "" : row.details[5]);
+          configPlNameSelected.add(row.details[6] == "NULL" ? "" : row.details[6]);
+          configPlResolutionModes.add(""); 
+        }
+        noOfConfigController.text = configNames.length.toString();
+        
+        showMessage("Loaded existing configurations", false);
+      });
+    } catch (e) {
+      showMessage("Error loading: $e", true);
     }
   }
 
@@ -642,6 +797,25 @@ class StateCreate extends State<Create> {
                                   prefixIcon: const Icon(
                                     Icons.file_present_rounded,
                                     size: 20,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              SizedBox(
+                                width: double.infinity,
+                                child: FilledButton.icon(
+                                  style: FilledButton.styleFrom(
+                                    backgroundColor: Colors.blue.shade600,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                  ),
+                                  onPressed: _loadExistingCards,
+                                  icon: const Icon(Icons.download),
+                                  label: const Text(
+                                    "Load Existing Database",
+                                    style: TextStyle(fontWeight: FontWeight.bold),
                                   ),
                                 ),
                               ),

@@ -24,11 +24,50 @@ func Create(auto utils.AutoPopulate) utils.Ack {
 			Message: "Cannot Create database",
 		}
 	}
+	defer db.Close()
 
-	ack := autoPopulateIndependentTables(db)
-	if !ack.OK {
-		return ack
+	var tableName string
+	err = db.QueryRow("SELECT name FROM sqlite_master WHERE type='table' AND name='Configurations';").Scan(&tableName)
+	isNewDB := (err == sql.ErrNoRows) || (tableName == "")
+
+	if isNewDB {
+		ack := autoPopulateIndependentTables(db)
+		if !ack.OK {
+			return ack
+		}
 	}
+
+	for _, name := range auto.DeletedRxNames {
+		ack := DeleteBulk(db, "rx", name)
+		if !ack.OK {
+			return utils.Ack{OK: false, Message: "Unable to delete Rx: " + ack.Message}
+		}
+	}
+	for _, name := range auto.DeletedTxNames {
+		ack := DeleteBulk(db, "tx", name)
+		if !ack.OK {
+			return utils.Ack{OK: false, Message: "Unable to delete Tx: " + ack.Message}
+		}
+	}
+	for _, name := range auto.DeletedTPNames {
+		ack := DeleteBulk(db, "tp", name)
+		if !ack.OK {
+			return utils.Ack{OK: false, Message: "Unable to delete Tp: " + ack.Message}
+		}
+	}
+	for _, name := range auto.DeletedPlNames {
+		_, err := db.Exec("DELETE FROM SpecPL WHERE ConfigName = ?", name)
+		if err != nil {
+			return utils.Ack{OK: false, Message: "Unable to delete PL: " + err.Error()}
+		}
+	}
+	for _, name := range auto.DeletedConfigNames {
+		ack := DeleteBulk(db, "config", name)
+		if !ack.OK {
+			return utils.Ack{OK: false, Message: "Unable to delete Config: " + ack.Message}
+		}
+	}
+
 	for i := range auto.RxNames {
 		ack := autoPopulateRxRelated(db, auto.RxNames[i], auto.RxFrequencies[i], auto.RxModulation[i])
 		if !ack.OK {
@@ -105,7 +144,7 @@ func autoPopulateIndependentTables(db *sql.DB) utils.Ack {
 	date := now.Format("02-01-2006")
 	time := now.Format("15:04:05")
 	var selected int = 1
-	query := `INSERT INTO TestPhases(Name, CreationDate, CreationTime, Selected)
+	query := `INSERT OR REPLACE INTO TestPhases(Name, CreationDate, CreationTime, Selected)
 	VALUES (?,?,?,?)`
 	_, err = tx.Exec(query, testPhaseName, date, time, selected)
 	if err != nil {
@@ -145,7 +184,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 		codeRate.Valid = true
 		codeRate.Float64 = 3069000
 	}
-	query := `INSERT INTO SpecRx 
+	query := `INSERT OR REPLACE INTO SpecRx 
 	(RxName, Frequency, MaxPower, TCSubCarrierFrequency, ModulationScheme, AcquisitionOffset, SweepRange, SweepRate, TCModIndex, FrequencyDeviationFM, CodeRateInMcps)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err = tx.Exec(query, rxName, freq, values[0], values[8], modulation, values[5], values[4], values[3], values[9], values[10], codeRate)
@@ -159,7 +198,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	}
 	//SpecRxTMTC
 	tmValues := getSampleRxTMTC(rxName)
-	query = `INSERT INTO SpecRxTMTC 
+	query = `INSERT OR REPLACE INTO SpecRxTMTC 
 	(RxName, LockStatusMnemonic, LockStatusValue, BSLockStatusMnemonic, BSLockStatusValue, AGCMnemonic, LoopStressMnemonic, CommandCounterMnemonic, TestCommandSet, TestCommandReset)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err = tx.Exec(query, rxName, tmValues[0], tmValues[1], tmValues[2], tmValues[3], tmValues[4], tmValues[5], tmValues[6], tmValues[7], tmValues[8])
@@ -173,7 +212,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	}
 	//SpectrumProfile for Rx
 	spectrumValues := getSampleSpectrumSettings()
-	query = `INSERT INTO SpectrumProfile 
+	query = `INSERT OR REPLACE INTO SpectrumProfile 
 	(Name, CenterFrequency, Span, RBW, VBW)
 	VALUES (?, ?, ?, ?, ?)`
 	_, err = tx.Exec(query, rxName+"-Uplink", freq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
@@ -186,7 +225,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	}
 	// Frequency Profile for CDMA Doppler Test
 	if modulation == "CDMA" {
-		query := `INSERT OR IGNORE INTO FrequencyProfile(Name, MaxFrequency,StepSize,CommandingRequired,DopplerFile)VALUES (?,?,?,?,?)`
+		query := `INSERT OR REPLACE INTO FrequencyProfile(Name, MaxFrequency,StepSize,CommandingRequired,DopplerFile)VALUES (?,?,?,?,?)`
 		_, err = tx.Exec(query, "Doppler-CDMA", 125000.0, 25000.0, "Yes", "/umacs/umacsops/sarc/resources/doppler.csv")
 		if err != nil {
 			fmt.Println(err)
@@ -200,7 +239,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 
 	// Test Specific Profile for receiver in PowerProfile Table
 	if modulation == "FM" || modulation == "PSK" || modulation == "FSK" {
-		query := `INSERT OR IGNORE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		query := `INSERT OR REPLACE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err = tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
 		if err != nil {
 			fmt.Println(err)
@@ -211,7 +250,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 			}
 		}
 	} else if modulation == "PM" {
-		query := `INSERT OR IGNORE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		query := `INSERT OR REPLACE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err1 := tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
 		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
 		if err1 != nil || err2 != nil {
@@ -222,7 +261,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 			}
 		}
 	} else if modulation == "CDMA" {
-		query := `INSERT OR IGNORE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
+		query := `INSERT OR REPLACE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
 		_, err = tx.Exec(query, "DopplerProfile", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
 		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
 		if err != nil || err2 != nil {
@@ -237,7 +276,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 
 	//TM Profile for receiver in TMProfile Table
 	preReq, _ := getRxTM(rxName)
-	query = `INSERT INTO TMProfile(Name, PreRequisiteTM, LogTM)
+	query = `INSERT OR REPLACE INTO TMProfile(Name, PreRequisiteTM, LogTM)
 	VALUES(?,?,?)`
 	_, err = tx.Exec(query, rxName+"-TM", preReq, "")
 	if err != nil {
@@ -256,7 +295,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	var minPowerCable int32 = -90
 	var maxPowerRadiated int32 = -50
 	var minPowerRadiated int32 = -90
-	query = `INSERT INTO UpDownConverter(Name, InputFrequency, OutputFrequency, MaxPowerCable, MinPowerCable, MaxPowerRadiated, MinPowerRadiated)
+	query = `INSERT OR REPLACE INTO UpDownConverter(Name, InputFrequency, OutputFrequency, MaxPowerCable, MinPowerCable, MaxPowerRadiated, MinPowerRadiated)
 	VALUES (?, ?, ?, ?, ?, ?, ?);`
 	_, err = tx.Exec(query, upConverterNanme, IF, freq, maxPowerCable, minPowerCable, maxPowerRadiated, minPowerRadiated)
 	if err != nil {
@@ -304,7 +343,7 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 	}
 	//SpecTx
 	valuesFloat, _, isBurst, burstTime := getDefaultTxSpecs(modulation, freq)
-	query := `INSERT INTO SpecTx 
+	query := `INSERT OR REPLACE INTO SpecTx 
 	(TxName, Frequency, Power, Spurious, Harmonics, AllowedFrequencyDeviation, AllowedPowerDevaition, ModulationScheme, IsBurst, BurstTime)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 	_, err = tx.Exec(query, txName, freq, power, valuesFloat[0], valuesFloat[1], valuesFloat[2], valuesFloat[3], modulation, isBurst, burstTime)
@@ -318,7 +357,7 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 	}
 	//SpecTxHarmonics
 
-	query = `INSERT INTO SpecTxHarmonics
+	query = `INSERT OR REPLACE INTO SpecTxHarmonics
 	(TxName, HarmonicsID, HarmonicType, HarmonicsName, Frequency, TotalLossFromTxToSA)
 	VALUES (?, ?, ?,?, ?, ?)`
 
@@ -342,7 +381,7 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 	}
 	//SpecTxsubCarriers
 
-	query = `INSERT INTO SpecTxSubCarriers
+	query = `INSERT OR REPLACE INTO SpecTxSubCarriers
 	(TxName, SubCarrierID, SubCarrierName, Frequency, ModIndex, AllowedModIndexDeviation, AlwaysPresent, PeakFrequencyDeviation)
 	VALUES (?,?,?,?,?,?,?,?)`
 
@@ -386,7 +425,7 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 	}
 	//SpectrumProfile for Tx
 	spectrumValues := getSampleSpectrumSettings()
-	query = `INSERT INTO SpectrumProfile 
+	query = `INSERT OR REPLACE INTO SpectrumProfile 
 	(Name, CenterFrequency, Span, RBW, VBW)
 	VALUES (?, ?, ?, ?, ?)`
 	_, err = tx.Exec(query, txName+"-Downlink", freq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
@@ -417,7 +456,7 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 	}
 	//TM Profile for transmitter in TMProfile Table
 	preReq, _ := getTxTM(txName)
-	query = `INSERT INTO TMProfile(Name, PreRequisiteTM, LogTM)
+	query = `INSERT OR REPLACE INTO TMProfile(Name, PreRequisiteTM, LogTM)
 	VALUES(?,?,?)`
 	_, err = tx.Exec(query, txName+"-TM", preReq, "")
 	if err != nil {
@@ -428,7 +467,7 @@ func autoPopulateTxRelated(db *sql.DB, txName string, freq float64, power float6
 		}
 	}
 
-	query = `INSERT INTO UpDownConverter(Name, InputFrequency, OutputFrequency, MaxPowerCable, MinPowerCable, MaxPowerRadiated, MinPowerRadiated)
+	query = `INSERT OR REPLACE INTO UpDownConverter(Name, InputFrequency, OutputFrequency, MaxPowerCable, MinPowerCable, MaxPowerRadiated, MinPowerRadiated)
 	VALUES (?, ?, ?, ?, ?, ?, ?);`
 
 	var downConverterNanme string = "DownConverter-" + txName
@@ -518,7 +557,7 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 	rows.Close()
 	txFreq := freqs[0]
 	//SpecTp
-	query = `INSERT INTO SpecTp 
+	query = `INSERT OR REPLACE INTO SpecTp 
 	(TpName, RxName, TxName)
 	VALUES (?, ?, ?)`
 	_, err = tx.Exec(query, tpName, rxName, txName)
@@ -531,7 +570,7 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 		}
 	}
 	//SpecTpRanging
-	query = `INSERT INTO SpecTpRanging 
+	query = `INSERT OR REPLACE INTO SpecTpRanging 
 	(TpName, RangingID, RangingName, ToneFrequency, UplinkToneMIOnlyRanging, UplinkToneMISimultaneousCmdAndRanging,
 		TCMISimultaneousCmdAndRanging, DownlinkMI, AllowedDownlinkMIDeviation, AvailableForCommanding)
 	VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
@@ -563,7 +602,7 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 	}
 	//SpectrumProfile for TP
 	spectrumValues := getSampleSpectrumSettings()
-	query = `INSERT INTO SpectrumProfile 
+	query = `INSERT OR REPLACE INTO SpectrumProfile 
 	(Name, CenterFrequency, Span, RBW, VBW)
 	VALUES (?, ?, ?, ?, ?)`
 	_, err = tx.Exec(query, tpName+"-Uplink", rxFreq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
@@ -575,7 +614,7 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 		}
 	}
 
-	query = `INSERT INTO SpectrumProfile 
+	query = `INSERT OR REPLACE INTO SpectrumProfile 
 	(Name, CenterFrequency, Span, RBW, VBW)
 	VALUES (?, ?, ?, ?, ?)`
 	_, err = tx.Exec(query, tpName+"-Downlink", txFreq, spectrumValues[0], spectrumValues[1], spectrumValues[2])
@@ -590,7 +629,7 @@ func autoPopulateTPRelated(db *sql.DB, tpName string, rxName string, txName stri
 	preRx, _ := getRxTM(rxName)
 	preTx, _ := getTxTM(txName)
 	var preReq string = preRx + "," + preTx
-	query = `INSERT INTO TMProfile(Name, PreRequisiteTM, LogTM)
+	query = `INSERT OR REPLACE INTO TMProfile(Name, PreRequisiteTM, LogTM)
 	VALUES(?,?,?)`
 	_, err = tx.Exec(query, tpName+"-TM", preReq, "")
 	if err != nil {
@@ -627,7 +666,7 @@ func autoPopulatePLRelated(db *sql.DB, configName string, freq float64, peakPowe
 	}
 
 	// PulseProfile for payload
-	pulseQuery := `INSERT OR IGNORE INTO PulseProfile(Name, TransientON, IQOn, AcquisitionTime, SweepTime, SweepCount,
+	pulseQuery := `INSERT OR REPLACE INTO PulseProfile(Name, TransientON, IQOn, AcquisitionTime, SweepTime, SweepCount,
 		FilterType, FilterBandwidth, YTop, ThresholdLevel, Hysterisis, PPMTriggerLevel, PPMReferenceLevel, PPMYDivision, PPMChannel)
 		VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 
@@ -646,7 +685,7 @@ func autoPopulatePLRelated(db *sql.DB, configName string, freq float64, peakPowe
 	}
 
 	// TRMProfile for payload
-	trmQuery := `INSERT INTO TRMProfile(Name, NoOfTRMs, TimePerTRMInSecs, DelayBeforeFirstReadInSecs)
+	trmQuery := `INSERT OR REPLACE INTO TRMProfile(Name, NoOfTRMs, TimePerTRMInSecs, DelayBeforeFirstReadInSecs)
 		VALUES (?,?,?,?)`
 	_, err = tx.Exec(trmQuery, configName+"-TRM", 5, 10.0, 2.0)
 	if err != nil {
@@ -681,8 +720,13 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 			OK:      false,
 		}
 	}
+
+	// Delete existing tests and PL configurations to prevent duplicates on edit
+	tx.Exec("DELETE FROM Tests WHERE ConfigName = ?", configName)
+	tx.Exec("DELETE FROM SpecPL WHERE ConfigName = ?", configName)
+
 	valuesString, valueInt := getDefaultConfigs(configType)
-	query := `INSERT INTO Configurations(ConfigName, ConfigType, RxName, TxName, TpName, PayloadName,
+	query := `INSERT OR REPLACE INTO Configurations(ConfigName, ConfigType, RxName, TxName, TpName, PayloadName,
 		TSMConfigurationName, CortexIFM, IntermediateFrequency, ProgrammableAttnUsed, DeviceProfileName)
 	VALUES (?,?,?,?,?,?,?,?,?,?,?)`
 	_, err = tx.Exec(query, configName, configType, rxName, txName, tpName, plName, valuesString[0], valuesString[2],
@@ -700,7 +744,7 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 	var testPhase string = "Pre-T&E"
 	if strings.EqualFold(configType, "Rx") || strings.EqualFold(configType, "Tp") {
 		var uplinkLoss string = "1,Common Loss,0.0,Common\n2,PM Loss,0,PM\n3,Spacecraft Loss,0.0,Spacecraft\n4,SA Loss,0.0,SA"
-		query = `INSERT INTO UplinkLoss(ConfigName, TestPhaseName, Profile)VALUES (?,?,?)`
+		query = `INSERT OR REPLACE INTO UplinkLoss(ConfigName, TestPhaseName, Profile)VALUES (?,?,?)`
 		_, err = tx.Exec(query, configName, testPhase, uplinkLoss)
 		if err != nil {
 			fmt.Println(err)
@@ -715,7 +759,7 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 	//Downlink Loss for transmitter
 	if strings.EqualFold(configType, "Tx") || strings.EqualFold(configType, "Tp") {
 		var downlinkLoss string = "1,Common Loss,0.0,Common\n2,PM Loss,0.0,PM\n3,SA Loss,0.0,SA"
-		query = `INSERT INTO DownlinkLoss(ConfigName, TestPhaseName, Profile)VALUES (?,?,?)`
+		query = `INSERT OR REPLACE INTO DownlinkLoss(ConfigName, TestPhaseName, Profile)VALUES (?,?,?)`
 		_, err = tx.Exec(query, configName, testPhase, downlinkLoss)
 		if err != nil {
 			fmt.Println(err)
@@ -745,7 +789,7 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 
 		avgTxPower := peakPower - 6.0
 
-		query := `insert into SpecPL (
+		query := `INSERT OR REPLACE INTO SpecPL (
             ConfigName, ResolutionMode, OnTime, CenterFrequency, UplinkPower, 
             PeakPower, PeakPowerTolerance, AveragePower, AveragePowerTolerance, 
             DutyCycle, DutyCycleTolerance, PulsePeriod, PulsePeriodTolerance, 
@@ -783,6 +827,7 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 	ack := populateTests(tx, configType, configName, rxName, txName, tpName)
 	if !ack.OK {
 		fmt.Println("populateTests failed:", ack.Message)
+		tx.Rollback()
 		return ack
 	}
 
@@ -802,12 +847,21 @@ func autoPopulateConfigurations(db *sql.DB, configName string, configType string
 
 func populateTests(tx *sql.Tx, configType string, configName string, rxName string, txName string, tpName string) utils.Ack {
 	if strings.EqualFold(configType, "Tp") {
+		if tpName == "" {
+			return utils.Ack{OK: false, Message: fmt.Sprintf("Configuration '%s' uses a transponder that is not listed", configName)}
+		}
 		return populateTpTestsForConfig(tx, configName, tpName)
 	}
 	if strings.EqualFold(configType, "Tx") {
+		if txName == "" {
+			return utils.Ack{OK: false, Message: fmt.Sprintf("Configuration '%s' uses a transmitter that is not listed", configName)}
+		}
 		return populateTxTestsForConfig(tx, configName, txName)
 	}
 	if strings.EqualFold(configType, "Rx") {
+		if rxName == "" {
+			return utils.Ack{OK: false, Message: fmt.Sprintf("Configuration '%s' uses a receiver that is not listed", configName)}
+		}
 		return populateRxTestsForConfig(tx, configName, rxName)
 	}
 	if strings.EqualFold(configType, "PL") {
@@ -864,7 +918,7 @@ func populateRxTestsForConfig(tx *sql.Tx, configName string, rxName string) util
 
 	for i := range len(rxTestTypes) {
 		values := getDefaultForRxTests(rxTestTypes[i], rxTestCategories[i], rxName)
-		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+		query := `INSERT OR REPLACE INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 					DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
 					TMProfileName )
 					VALUES (?,?,?,?,?,?,?,?,?)`
@@ -942,7 +996,7 @@ func populateTxTestsForConfig(tx *sql.Tx, configName string, txName string) util
 
 	for i := range len(txTestTypes) {
 		values := getDefaultForTxTests(txTestTypes[i], txTestCategories[i], txName)
-		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+		query := `INSERT OR REPLACE INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
 						TMProfileName )
 						VALUES (?,?,?,?,?,?,?,?,?)`
@@ -984,7 +1038,7 @@ func populateTpTestsForConfig(tx *sql.Tx, configName string, tpName string) util
 
 	for i := range len(tpTestTypes) {
 		values := getDefaultForTpTests(tpTestTypes[i], tpTestCategories[i], tpName)
-		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+		query := `INSERT OR REPLACE INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
 						TMProfileName)
 						VALUES (?,?,?,?,?,?,?,?,?)`
@@ -1020,7 +1074,7 @@ func populatePlTestsForConfig(tx *sql.Tx, configName string) utils.Ack {
 
 	for i := range len(plTestTypes) {
 		values := getDefaultForPlTests(plTestTypes[i], plTestCategories[i], configName)
-		query := `INSERT INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
+		query := `INSERT OR REPLACE INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
 						PulseProfileName )
 						VALUES (?,?,?,?,?,?,?,?,?)`

@@ -645,6 +645,13 @@ func deleteBulkConfig(db *sql.DB, name string) utils.Ack {
 		return utils.Ack{Message: "Delete DownlinkLoss Error", OK: false}
 	}
 
+	query = "Delete from SpecPL where ConfigName = ?"
+	_, err = tx.Exec(query, name)
+	if err != nil {
+		tx.Rollback()
+		return utils.Ack{Message: "Delete SpecPL Error", OK: false}
+	}
+
 	tx.Commit()
 	return utils.Ack{Message: "", OK: true}
 }

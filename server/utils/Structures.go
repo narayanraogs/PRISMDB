@@ -127,6 +127,11 @@ type AutoPopulate struct {
 	ConfigTPNames           []string
 	ConfigPlNames           []string
 	ConfigPlResolutionModes []string
+	DeletedRxNames          []string
+	DeletedTxNames          []string
+	DeletedTPNames          []string
+	DeletedPlNames          []string
+	DeletedConfigNames      []string
 	Create                  bool
 	OK                      bool
 	Message                 string

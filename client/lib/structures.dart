@@ -321,6 +321,12 @@ class CreateRequest {
   List<String> configPlNames = [];
   List<String> configPlResolutionModes = [];
 
+  List<String> deletedRxNames = [];
+  List<String> deletedTxNames = [];
+  List<String> deletedTpNames = [];
+  List<String> deletedPlNames = [];
+  List<String> deletedConfigNames = [];
+
   bool create = false;
   bool ok = false;
   String message = "";
@@ -351,6 +357,11 @@ class CreateRequest {
       'ConfigTPNames': configTPNames,
       'ConfigPlNames': configPlNames,
       'ConfigPlResolutionModes': configPlResolutionModes,
+      'DeletedRxNames': deletedRxNames,
+      'DeletedTxNames': deletedTxNames,
+      'DeletedTPNames': deletedTpNames,
+      'DeletedPlNames': deletedPlNames,
+      'DeletedConfigNames': deletedConfigNames,
       'Create': create,
       'OK': ok,
       'Message': message,
