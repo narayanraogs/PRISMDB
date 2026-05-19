@@ -700,8 +700,8 @@ func handleInsertConfigurations(q *database.Queries, ctx context.Context, req ut
 }
 
 func handleUpdateTSMConfigurations(q *database.Queries, ctx context.Context, req utils.UpdateRequest) error {
-	if len(req.Values) < 10 {
-		return fmt.Errorf("expected 10 values for TSMConfigurations, got %d", len(req.Values))
+	if len(req.Values) < 15 {
+		return fmt.Errorf("expected 15 values for TSMConfigurations, got %d", len(req.Values))
 	}
 	arg := database.UpdateTSMConfigurationParams{
 		Name:            req.Values[0],
@@ -714,14 +714,19 @@ func handleUpdateTSMConfigurations(q *database.Queries, ctx context.Context, req
 		DownlinkToSA:    sql.NullString{String: req.Values[7], Valid: true},
 		DownlinkToPM:    sql.NullString{String: req.Values[8], Valid: true},
 		AttnNumber:      sql.NullInt64{Int64: parseInt(req.Values[9]), Valid: true},
+		DownlinkToDC:    sql.NullString{String: req.Values[10], Valid: true},
+		InputPortName:   sql.NullString{String: req.Values[11], Valid: true},
+		SAPortName:      sql.NullString{String: req.Values[12], Valid: true},
+		PMPortName:      sql.NullString{String: req.Values[13], Valid: true},
+		OutputPortName:  sql.NullString{String: req.Values[14], Valid: true},
 		Name_2:          req.PrimaryKey,
 	}
 	return q.UpdateTSMConfiguration(ctx, arg)
 }
 
 func handleInsertTSMConfigurations(q *database.Queries, ctx context.Context, req utils.UpdateRequest) error {
-	if len(req.Values) < 10 {
-		return fmt.Errorf("expected 10 values for TSMConfigurations, got %d", len(req.Values))
+	if len(req.Values) < 15 {
+		return fmt.Errorf("expected 15 values for TSMConfigurations, got %d", len(req.Values))
 	}
 	arg := database.InsertTSMConfigurationParams{
 		Name:            req.Values[0],
@@ -734,6 +739,11 @@ func handleInsertTSMConfigurations(q *database.Queries, ctx context.Context, req
 		DownlinkToSA:    sql.NullString{String: req.Values[7], Valid: true},
 		DownlinkToPM:    sql.NullString{String: req.Values[8], Valid: true},
 		AttnNumber:      sql.NullInt64{Int64: parseInt(req.Values[9]), Valid: true},
+		DownlinkToDC:    sql.NullString{String: req.Values[10], Valid: true},
+		InputPortName:   sql.NullString{String: req.Values[11], Valid: true},
+		SAPortName:      sql.NullString{String: req.Values[12], Valid: true},
+		PMPortName:      sql.NullString{String: req.Values[13], Valid: true},
+		OutputPortName:  sql.NullString{String: req.Values[14], Valid: true},
 	}
 	return q.InsertTSMConfiguration(ctx, arg)
 }

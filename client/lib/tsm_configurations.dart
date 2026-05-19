@@ -29,6 +29,11 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
   TextEditingController _downlinkToSAController = TextEditingController();
   TextEditingController _downlinkToPMController = TextEditingController();
   TextEditingController _attenuationController = TextEditingController();
+  TextEditingController _downlinkToDCController = TextEditingController();
+  TextEditingController _inputPortNameController = TextEditingController();
+  TextEditingController _saPortNameController = TextEditingController();
+  TextEditingController _pmPortNameController = TextEditingController();
+  TextEditingController _outputPortNameController = TextEditingController();
   bool _uplink = false;
   bool _downlink = false;
 
@@ -67,6 +72,11 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
           _downlinkToSAController.text = temp.values[7];
           _downlinkToPMController.text = temp.values[8];
           _attenuationController.text = temp.values[9];
+          _downlinkToDCController.text = temp.values[10];
+          _inputPortNameController.text = temp.values[11];
+          _saPortNameController.text = temp.values[12];
+          _pmPortNameController.text = temp.values[13];
+          _outputPortNameController.text = temp.values[14];
 
           // Determine Checkbox states based on data presence
           _updateCheckboxStates();
@@ -107,6 +117,11 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
     if (data.length > 8) _downlinkToSAController.text = data[8];
     if (data.length > 9) _downlinkToPMController.text = data[9];
     if (data.length > 10) _attenuationController.text = data[10];
+    if (data.length > 11) _downlinkToDCController.text = data[11];
+    if (data.length > 12) _inputPortNameController.text = data[12];
+    if (data.length > 13) _saPortNameController.text = data[13];
+    if (data.length > 14) _pmPortNameController.text = data[14];
+    if (data.length > 15) _outputPortNameController.text = data[15];
 
     _updateCheckboxStates();
     setState(() {});
@@ -116,7 +131,7 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
     if (_uplinkToSCController.text.isNotEmpty || _uplinkToSAController.text.isNotEmpty || _uplinkToPMController.text.isNotEmpty) {
       _uplink = true;
     }
-    if (_downlinkToSAController.text.isNotEmpty || _downlinkToPMController.text.isNotEmpty) {
+    if (_downlinkToSAController.text.isNotEmpty || _downlinkToPMController.text.isNotEmpty || _downlinkToDCController.text.isNotEmpty) {
       _downlink = true;
     }
   }
@@ -323,7 +338,42 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
           return null;
         },
       ));
+
+      children.add(_buildTextField(
+        controller: _downlinkToDCController,
+        label: "Downlink to DC",
+        validator: (value) {
+          if (value == null || value.trim().isEmpty) return "Required";
+          return null;
+        },
+      ));
     }
+
+    children.add(const Padding(
+      padding: EdgeInsets.only(top: 10.0, bottom: 12.0),
+      child: Text("Port Settings", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)),
+    ));
+
+    children.add(_buildTextField(
+      controller: _inputPortNameController,
+      label: "Input Port Name",
+    ));
+
+    children.add(_buildTextField(
+      controller: _saPortNameController,
+      label: "SA Port Name",
+    ));
+
+    children.add(_buildTextField(
+      controller: _pmPortNameController,
+      label: "PM Port Name",
+    ));
+
+    children.add(_buildTextField(
+      controller: _outputPortNameController,
+      label: "Output Port Name",
+    ));
+
     return children;
   }
 
@@ -368,6 +418,11 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
     values.add(_downlinkToSAController.text);
     values.add(_downlinkToPMController.text);
     values.add(_attenuationController.text);
+    values.add(_downlinkToDCController.text);
+    values.add(_inputPortNameController.text);
+    values.add(_saPortNameController.text);
+    values.add(_pmPortNameController.text);
+    values.add(_outputPortNameController.text);
     if (edit) {
       var ok = await sendUpdateRequest(clientID, tableName, values,
           primaryKey: widget.global.rowSelected);

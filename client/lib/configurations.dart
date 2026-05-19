@@ -39,7 +39,8 @@ class StateConfigurations extends State<Configurations> {
   String _pmChannel = 'A';
   final List<String> _progAttnOptions = ['Yes', 'No'];
   String _progAttnUsed = 'Yes';
-  String _deviceProfileName = ''; // Hidden field to preserve DeviceProfileName
+  List<String> _deviceProfiles = [];
+  String _deviceProfileName = '';
 
   void sendRequest() async {
     // 1. Fetch Dropdown Options
@@ -93,6 +94,14 @@ class StateConfigurations extends State<Configurations> {
         if (mounted) {
             _tsmNames = values;
             if (_tsmName.isEmpty && values.isNotEmpty) _tsmName = values.first;
+        }
+    });
+
+    // Fetch DeviceProfiles
+    await _fetchValues("DeviceProfiles").then((values) {
+        if (mounted) {
+            _deviceProfiles = values;
+            if (_deviceProfileName.isEmpty && values.isNotEmpty) _deviceProfileName = values.first;
         }
     });
   }
@@ -340,6 +349,11 @@ class StateConfigurations extends State<Configurations> {
         child: getPMChannelDD(),
       ));
     }
+
+    children.add(Padding(
+      padding: const EdgeInsets.only(bottom: 20.0),
+      child: getDeviceProfileDropdown(),
+    ));
 
     return children;
   }
@@ -728,6 +742,34 @@ class StateConfigurations extends State<Configurations> {
       ),
       onChanged: (String? value) {
         _configType = value ?? _configTypes.first;
+        setState(() {});
+      },
+    );
+  }
+
+  DropdownButtonFormField<String> getDeviceProfileDropdown() {
+    List<DropdownMenuItem<String>> entries = [];
+    for (String dp in _deviceProfiles) {
+      var item = DropdownMenuItem<String>(
+        value: dp,
+        child: Text(dp),
+      );
+      entries.add(item);
+    }
+    return DropdownButtonFormField<String>(
+      items: entries,
+      isExpanded: true,
+      value: (_deviceProfiles.contains(_deviceProfileName)) ? _deviceProfileName : (_deviceProfiles.isNotEmpty ? _deviceProfiles.first : null),
+      decoration: InputDecoration(
+        labelText: "Device Profile Name",
+        filled: true,
+        fillColor: Colors.grey.withOpacity(0.04),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      ),
+      onChanged: (String? value) {
+        _deviceProfileName = value ?? (_deviceProfiles.isNotEmpty ? _deviceProfiles.first : '');
         setState(() {});
       },
     );

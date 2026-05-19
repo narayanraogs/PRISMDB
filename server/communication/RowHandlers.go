@@ -332,6 +332,11 @@ func handleGetTSMConfigurations(q *database.Queries, ctx context.Context, req ut
 	} else {
 		resp.Values = append(resp.Values, "0")
 	}
+	resp.Values = append(resp.Values, NullToString(row.DownlinkToDC))
+	resp.Values = append(resp.Values, NullToString(row.InputPortName))
+	resp.Values = append(resp.Values, NullToString(row.SAPortName))
+	resp.Values = append(resp.Values, NullToString(row.PMPortName))
+	resp.Values = append(resp.Values, NullToString(row.OutputPortName))
 	return nil
 }
 

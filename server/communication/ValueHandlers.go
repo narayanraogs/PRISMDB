@@ -145,6 +145,16 @@ func getValues(c *gin.Context) {
 			}
 			resp.OK = true
 		}
+	case "DeviceProfiles":
+		dpList, err := q.ListDeviceProfile(ctx)
+		if err != nil {
+			resp.Message = err.Error()
+		} else {
+			for _, dp := range dpList {
+				resp.Values = append(resp.Values, dp.DeviceProfileName)
+			}
+			resp.OK = true
+		}
 	default:
 		resp.Message = "Unknown Key"
 	}
