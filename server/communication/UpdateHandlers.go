@@ -705,20 +705,20 @@ func handleUpdateTSMConfigurations(q *database.Queries, ctx context.Context, req
 	}
 	arg := database.UpdateTSMConfigurationParams{
 		Name:            req.Values[0],
-		UplinkToSC:      sql.NullString{String: req.Values[1], Valid: true},
-		IncludePad:      sql.NullString{String: req.Values[2], Valid: true},
-		ExcludePad:      sql.NullString{String: req.Values[3], Valid: true},
-		UplinkToSA:      sql.NullString{String: req.Values[4], Valid: true},
-		UplinkToPM:      sql.NullString{String: req.Values[5], Valid: true},
-		TerminateUplink: sql.NullString{String: req.Values[6], Valid: true},
-		DownlinkToSA:    sql.NullString{String: req.Values[7], Valid: true},
-		DownlinkToPM:    sql.NullString{String: req.Values[8], Valid: true},
-		AttnNumber:      sql.NullInt64{Int64: parseInt(req.Values[9]), Valid: true},
-		DownlinkToDC:    sql.NullString{String: req.Values[10], Valid: true},
-		InputPortName:   sql.NullString{String: req.Values[11], Valid: true},
-		SAPortName:      sql.NullString{String: req.Values[12], Valid: true},
-		PMPortName:      sql.NullString{String: req.Values[13], Valid: true},
-		OutputPortName:  sql.NullString{String: req.Values[14], Valid: true},
+		UplinkToSC:      ToNullString(req.Values[1]),
+		IncludePad:      ToNullString(req.Values[2]),
+		ExcludePad:      ToNullString(req.Values[3]),
+		UplinkToSA:      ToNullString(req.Values[4]),
+		UplinkToPM:      ToNullString(req.Values[5]),
+		TerminateUplink: ToNullString(req.Values[6]),
+		DownlinkToSA:    ToNullString(req.Values[7]),
+		DownlinkToPM:    ToNullString(req.Values[8]),
+		AttnNumber:      NullToInt64(req.Values[9]),
+		DownlinkToDC:    ToNullString(req.Values[10]),
+		InputPortName:   ToNullString(req.Values[11]),
+		SAPortName:      ToNullString(req.Values[12]),
+		PMPortName:      ToNullString(req.Values[13]),
+		OutputPortName:  ToNullString(req.Values[14]),
 		Name_2:          req.PrimaryKey,
 	}
 	return q.UpdateTSMConfiguration(ctx, arg)
@@ -730,20 +730,20 @@ func handleInsertTSMConfigurations(q *database.Queries, ctx context.Context, req
 	}
 	arg := database.InsertTSMConfigurationParams{
 		Name:            req.Values[0],
-		UplinkToSC:      sql.NullString{String: req.Values[1], Valid: true},
-		IncludePad:      sql.NullString{String: req.Values[2], Valid: true},
-		ExcludePad:      sql.NullString{String: req.Values[3], Valid: true},
-		UplinkToSA:      sql.NullString{String: req.Values[4], Valid: true},
-		UplinkToPM:      sql.NullString{String: req.Values[5], Valid: true},
-		TerminateUplink: sql.NullString{String: req.Values[6], Valid: true},
-		DownlinkToSA:    sql.NullString{String: req.Values[7], Valid: true},
-		DownlinkToPM:    sql.NullString{String: req.Values[8], Valid: true},
-		AttnNumber:      sql.NullInt64{Int64: parseInt(req.Values[9]), Valid: true},
-		DownlinkToDC:    sql.NullString{String: req.Values[10], Valid: true},
-		InputPortName:   sql.NullString{String: req.Values[11], Valid: true},
-		SAPortName:      sql.NullString{String: req.Values[12], Valid: true},
-		PMPortName:      sql.NullString{String: req.Values[13], Valid: true},
-		OutputPortName:  sql.NullString{String: req.Values[14], Valid: true},
+		UplinkToSC:      ToNullString(req.Values[1]),
+		IncludePad:      ToNullString(req.Values[2]),
+		ExcludePad:      ToNullString(req.Values[3]),
+		UplinkToSA:      ToNullString(req.Values[4]),
+		UplinkToPM:      ToNullString(req.Values[5]),
+		TerminateUplink: ToNullString(req.Values[6]),
+		DownlinkToSA:    ToNullString(req.Values[7]),
+		DownlinkToPM:    ToNullString(req.Values[8]),
+		AttnNumber:      NullToInt64(req.Values[9]),
+		DownlinkToDC:    ToNullString(req.Values[10]),
+		InputPortName:   ToNullString(req.Values[11]),
+		SAPortName:      ToNullString(req.Values[12]),
+		PMPortName:      ToNullString(req.Values[13]),
+		OutputPortName:  ToNullString(req.Values[14]),
 	}
 	return q.InsertTSMConfiguration(ctx, arg)
 }
@@ -1162,4 +1162,11 @@ func ToNullString(val string) sql.NullString {
 		return sql.NullString{Valid: false}
 	}
 	return sql.NullString{String: val, Valid: true}
+}
+
+func NullToInt64(val string) sql.NullInt64 {
+	if val == "" {
+		return sql.NullInt64{Valid: false}
+	}
+	return sql.NullInt64{Int64: parseInt(val), Valid: true}
 }

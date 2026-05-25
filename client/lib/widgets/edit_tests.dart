@@ -378,7 +378,7 @@ class _EditTestsState extends State<EditTests> {
     bool showDL = false;
     bool showPower = false;
     bool showFreq = false;
-    bool showTM = false;
+    bool showTM = true;
     bool showDLPower = false;
     bool showPulse = false;
     bool showTRM = false;
@@ -391,7 +391,6 @@ class _EditTestsState extends State<EditTests> {
       showUL = true;
       showPower = true;
       showFreq = true;
-      showTM = true;
     } 
     else if (ct == 'Tx') {
        showDL = true;
@@ -403,14 +402,12 @@ class _EditTestsState extends State<EditTests> {
        showUL = true;
        showPower = true;
        showFreq = true;
-       showTM = true;
        showDL = true;
        showDLPower = true; 
     }
     else if (ct == 'PL') {
        showDL = true;
        showPulse = true;
-       showTM = true;
        if (tt == 'TRMAnalysis') {
          showTRM = true;
        }

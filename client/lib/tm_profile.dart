@@ -216,6 +216,7 @@ class StateTmProfile extends State<TmProfile> {
           itemCount: items.length,
           itemBuilder: (ctx, index) {
             return Padding(
+              key: ObjectKey(items[index]),
               padding: const EdgeInsets.only(bottom: 8.0),
               child: Row(
                 children: [

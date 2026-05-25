@@ -294,6 +294,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
               List<String> row = entry.value;
               row[0] = '${rowIndex + 1}';
               return DataRow(
+                key: ObjectKey(row),
                 cells: [
                   DataCell(Text(row[0])),
                   _buildDataCell(cfg, data, rowIndex, 1, row[1]),

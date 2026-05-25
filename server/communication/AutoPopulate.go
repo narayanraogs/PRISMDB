@@ -1076,10 +1076,10 @@ func populatePlTestsForConfig(tx *sql.Tx, configName string) utils.Ack {
 		values := getDefaultForPlTests(plTestTypes[i], plTestCategories[i], configName)
 		query := `INSERT OR REPLACE INTO Tests(ConfigName, TestType, TestCategory, ULProfileName,
 						DLProfileName, PowerProfileName, FrequencyProfileName, DownlinkPowerProfileName,
-						PulseProfileName )
-						VALUES (?,?,?,?,?,?,?,?,?)`
+						PulseProfileName, TMProfileName )
+						VALUES (?,?,?,?,?,?,?,?,?,?)`
 		_, err := tx.Exec(query, configName, plTestTypes[i], plTestCategories[i], values[0], values[1], values[2], values[4], values[3],
-			values[6])
+			values[6], values[7])
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -1249,25 +1249,29 @@ func getDefaultForPlTests(testType string, testCategory sql.NullString, configNa
 		dlSpectrum.String = "Scat-Downlink"
 	}
 
-	tm.Valid = true
+	var pulse sql.NullString
+	pulse.Valid = true
 	if testCategory.String == "PPM" {
 		if strings.HasSuffix(configName, "-A") {
-			tm.String = "PPM-ProfileA"
+			pulse.String = "PPM-ProfileA"
 		} else if strings.HasSuffix(configName, "-B") {
-			tm.String = "PPM-ProfileB"
+			pulse.String = "PPM-ProfileB"
 		} else {
-			tm.String = "PPM-Profile"
+			pulse.String = "PPM-Profile"
 		}
 	} else if testCategory.String == "VSA" {
 		if testType == "HighResolutionPulse" {
-			tm.String = "VSA-Profile-HR"
+			pulse.String = "VSA-Profile-HR"
 		} else {
-			tm.String = "VSA-Profile"
+			pulse.String = "VSA-Profile"
 		}
 	}
 
+	tm.Valid = true
+	tm.String = configName + "-TM"
+
 	var values = make([]sql.NullString, 0)
-	values = append(values, ulSpectrum, dlSpectrum, power, obwPower, loopStress, device, tm)
+	values = append(values, ulSpectrum, dlSpectrum, power, obwPower, loopStress, device, pulse, tm)
 	return values
 }
 

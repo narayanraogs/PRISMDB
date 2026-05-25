@@ -253,63 +253,40 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
       children.add(_buildTextField(
         controller: _uplinkToSCController,
         label: "Uplink To Spacecraft",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _includePadController,
         label: "Include Pad",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _excludePadController,
         label: "Exclude Pad",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _uplinkToSAController,
         label: "Uplink to SA",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _uplinkToPMController,
         label: "Uplink to PM",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _terminateUplinkController,
         label: "Terminate Uplink",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _attenuationController,
         label: "Attenuation",
         validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          if (int.tryParse(value) == null) return "Must be an integer";
+          if (value != null && value.trim().isNotEmpty) {
+            if (int.tryParse(value) == null) return "Must be an integer";
+          }
           return null;
         },
       ));
@@ -324,28 +301,16 @@ class StateTsmConfigurations extends State<TsmConfigurations> {
       children.add(_buildTextField(
         controller: _downlinkToSAController,
         label: "Downlink to SA",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _downlinkToPMController,
         label: "Downlink to PM",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
 
       children.add(_buildTextField(
         controller: _downlinkToDCController,
         label: "Downlink to DC",
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) return "Required";
-          return null;
-        },
       ));
     }
 
