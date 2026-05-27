@@ -9,6 +9,7 @@ import 'package:flutter/gestures.dart';
 import 'table_detail_screen.dart';
 import 'package:prism_db_editor/variables.dart';
 import 'package:prism_db_editor/create.dart';
+import '../main.dart';
 
 // Singleton for simplicity in this small app
 final ApiService _apiService = ApiService();
@@ -96,7 +97,33 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildSidebar(),
           VerticalDivider(thickness: 1, width: 1, color: Theme.of(context).dividerColor),
           Expanded(
-            child: _buildContent(),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: _buildContent(),
+                ),
+                Positioned(
+                  top: 16,
+                  right: 16,
+                  child: Row(
+                    children: [
+                      Icon(
+                        PrismApp.of(context).isLightMode ? Icons.light_mode : Icons.dark_mode, 
+                        size: 20, 
+                        color: Theme.of(context).colorScheme.primary
+                      ),
+                      const SizedBox(width: 8),
+                      Switch(
+                        value: PrismApp.of(context).isLightMode,
+                        onChanged: (val) {
+                          PrismApp.of(context).toggleTheme();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

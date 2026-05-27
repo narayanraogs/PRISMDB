@@ -17,8 +17,26 @@ class MyCustomScrollBehavior extends MaterialScrollBehavior {
       };
 }
 
-class PrismApp extends StatelessWidget {
+class PrismApp extends StatefulWidget {
   const PrismApp({super.key});
+
+  static _PrismAppState of(BuildContext context) => 
+      context.findAncestorStateOfType<_PrismAppState>()!;
+
+  @override
+  State<PrismApp> createState() => _PrismAppState();
+}
+
+class _PrismAppState extends State<PrismApp> {
+  ThemeMode _themeMode = ThemeMode.dark;
+
+  void toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
+    });
+  }
+
+  bool get isLightMode => _themeMode == ThemeMode.light;
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +44,63 @@ class PrismApp extends StatelessWidget {
       title: 'PRISM DB',
       debugShowCheckedModeBanner: false,
       scrollBehavior: MyCustomScrollBehavior(),
+      themeMode: _themeMode,
       theme: ThemeData(
+        useMaterial3: true,
+        brightness: Brightness.light,
+        textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+          brightness: Brightness.light,
+          primary: Colors.blue.shade700,
+          onPrimary: Colors.white,
+          secondary: Colors.lightBlue,
+          surface: Colors.white,
+          onSurface: Colors.black87,
+        ),
+        scaffoldBackgroundColor: const Color(0xFFF3F4F6), // Light gray background
+        dividerTheme: DividerThemeData(
+          color: Colors.blue.withOpacity(0.15),
+        ),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.blue.shade700,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          titleTextStyle: GoogleFonts.poppins(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 2,
+          shadowColor: Colors.black.withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+            side: BorderSide(color: Colors.blue.withOpacity(0.2)),
+          ),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            backgroundColor: Colors.blue.shade700,
+            foregroundColor: Colors.white,
+            textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+        ),
+        scrollbarTheme: ScrollbarThemeData(
+          thumbColor: WidgetStateProperty.all(Colors.blue.withOpacity(0.5)),
+          trackColor: WidgetStateProperty.all(Colors.grey.shade200),
+          trackVisibility: WidgetStateProperty.all(false),
+          thumbVisibility: WidgetStateProperty.all(false),
+          radius: const Radius.circular(8),
+          thickness: WidgetStateProperty.all(6),
+          interactive: true,
+        ),
+      ),
+      darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
         // Set default font to Poppins for a modern, bold look with dark text theme base

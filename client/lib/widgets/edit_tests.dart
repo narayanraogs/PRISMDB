@@ -95,8 +95,10 @@ class _EditTestsState extends State<EditTests> {
     _fetchConfigurations();
     _fetchProfiles();
     
-    if (widget.initialData != null && widget.initialData!.isNotEmpty && widget.global.rowSelected.isNotEmpty) {
-      _isEditing = true;
+    if (widget.initialData != null && widget.initialData!.isNotEmpty) {
+      if (widget.global.rowSelected.isNotEmpty) {
+        _isEditing = true;
+      }
       _populateData(widget.initialData!);
     }
   }
@@ -140,6 +142,16 @@ class _EditTestsState extends State<EditTests> {
              setState(() {
                _configNames = names;
                _configTypeMap = typeMap;
+               
+               if (_selectedConfigName != null && !_configNames.contains(_selectedConfigName)) {
+                 _configNames.add(_selectedConfigName!);
+                 String origName = _selectedConfigName!.replaceAll(" Copy", "");
+                 if (_configTypeMap.containsKey(origName)) {
+                    _configTypeMap[_selectedConfigName!] = _configTypeMap[origName]!;
+                 } else {
+                    _configTypeMap[_selectedConfigName!] = "";
+                 }
+               }
                
                if (_selectedConfigName != null && _configTypeMap.containsKey(_selectedConfigName)) {
                   String? type = _configTypeMap[_selectedConfigName];
@@ -308,8 +320,6 @@ class _EditTestsState extends State<EditTests> {
           setState(() {
             _selectedConfigName = val;
             _configType = _normalizeConfigType(_configTypeMap[val] ?? "");
-            _selectedTestType = null; // Reset choices
-            _selectedTestCategory = null;
           });
         }
       },

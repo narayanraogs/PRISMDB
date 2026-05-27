@@ -99,7 +99,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
           _testPhaseSelected = _testPhases.isNotEmpty ? _testPhases.first : "";
           _tpController.text = _testPhaseSelected;
           if (widget.isCopyMode) {
-            _sourceTestPhaseSelected = _testPhases.isNotEmpty ? _testPhases.first : "";
+            _sourceTestPhaseSelected = "";
           }
         } else {
           showMessage(temp.message, true);
@@ -467,6 +467,15 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
     var tableName = getTableName(widget.global.tableSelected);
     
     if (widget.isCopyMode) {
+      if (_testPhaseSelected == _sourceTestPhaseSelected) {
+        showMessage("Source and Destination Test Phases must be different", true);
+        return;
+      }
+      if (_selectedConfigs.isEmpty) {
+        showMessage("Please select at least one configuration", true);
+        return;
+      }
+      
       bool allOk = true;
       for (String cfg in _selectedConfigs) {
         List<String> values = [cfg, _testPhaseSelected];

@@ -103,7 +103,7 @@ func getValues(c *gin.Context) {
 			resp.Message = err.Error()
 		} else {
 			for _, cfg := range cfgList {
-				if cfg.ConfigType == "Rx" || cfg.ConfigType == "Tp" {
+				if cfg.ConfigType == "Rx" || cfg.ConfigType == "Tp" || cfg.ConfigType == "PL" {
 					resp.Values = append(resp.Values, cfg.ConfigName)
 				}
 			}
@@ -122,7 +122,7 @@ func getValues(c *gin.Context) {
 			resp.Message = err.Error()
 		} else {
 			for _, cfg := range cfgList {
-				if cfg.ConfigType == "Tx" || cfg.ConfigType == "Tp" {
+				if cfg.ConfigType == "Tx" || cfg.ConfigType == "Tp" || cfg.ConfigType == "PL" {
 					resp.Values = append(resp.Values, cfg.ConfigName)
 				}
 			}

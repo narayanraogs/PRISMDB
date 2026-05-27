@@ -18,15 +18,7 @@ class ImportLossDialog extends StatelessWidget {
             icon: const Icon(Icons.history),
             label: const Text('Copy from Previous Test Phase'),
           ),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(context, 'EXCEL');
-            },
-            icon: const Icon(Icons.file_upload),
-            label: const Text('Import from Excel/CSV'),
-          ),
-          const SizedBox(height: 12),
+
           ElevatedButton.icon(
             onPressed: () {
               Navigator.pop(context, 'MANUAL_ENTRY');

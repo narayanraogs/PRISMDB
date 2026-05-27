@@ -139,9 +139,8 @@ class _TableDetailViewState extends State<TableDetailView> {
         if (copied.length > 2) copied[2] = '${copied[2]}$mockSuffix';
         break;
       case 'tests': // [ID, ConfigName, TestType, TestCategory, ...]
-        if (copied.length > 3) {
-           copied[2] = '${copied[2]}$mockSuffix';
-           copied[3] = '${copied[3]}$mockSuffix';
+        if (copied.length > 1) {
+           copied[1] = '${copied[1]} Copy';
         }
         break;
       case 'uplinkloss': // [ID, ConfigName, TestPhaseName, Profile]
@@ -208,6 +207,9 @@ class _TableDetailViewState extends State<TableDetailView> {
         case 'uplinkloss':
         case 'tests':
         case 'deviceprofile':
+        case 'testphases':
+        case 'testphase':
+        case 'trmprofile':
           if (newRow.isNotEmpty) newRow.removeAt(0); // ID is at index 0 and dropped by backend
           break;
         case 'configurations':
@@ -890,6 +892,38 @@ class _TableDetailViewState extends State<TableDetailView> {
       }
     }
     
+    String summaryText = "$count pts$summary";
+    
+    if (widget.tableName.toLowerCase() == 'uplinkloss' || widget.tableName.toLowerCase() == 'downlinkloss') {
+      double commonSum = 0, scSum = 0, saSum = 0, pmSum = 0;
+      bool hasData = false;
+      for (var line in lines) {
+        var cols = line.split(',');
+        if (cols.length >= 4) {
+          hasData = true;
+          double lossVal = double.tryParse(cols[2]) ?? 0.0;
+          String cat = cols[3].trim().toLowerCase();
+          if (cat == 'common') commonSum += lossVal;
+          else if (cat == 'sc') scSum += lossVal;
+          else if (cat == 'sa') saSum += lossVal;
+          else if (cat == 'pm') pmSum += lossVal;
+        }
+      }
+      if (hasData) {
+        List<String> parts = [];
+        if (commonSum != 0) parts.add("Common: ${commonSum.toStringAsFixed(2)}");
+        if (scSum != 0) parts.add("SC: ${scSum.toStringAsFixed(2)}");
+        if (saSum != 0) parts.add("SA: ${saSum.toStringAsFixed(2)}");
+        if (pmSum != 0) parts.add("PM: ${pmSum.toStringAsFixed(2)}");
+        
+        if (parts.isNotEmpty) {
+          summaryText = parts.join(", ");
+        } else {
+          summaryText = "0 Loss";
+        }
+      }
+    }
+    
     return Tooltip(
       message: profileText,
       child: Container(
@@ -906,7 +940,7 @@ class _TableDetailViewState extends State<TableDetailView> {
             const SizedBox(width: 6),
             Flexible(
               child: Text(
-                "$count pts$summary",
+                summaryText,
                 style: const TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.bold,

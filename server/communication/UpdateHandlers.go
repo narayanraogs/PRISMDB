@@ -93,8 +93,11 @@ func updateRow(c *gin.Context) {
 	}
 
 	if err != nil {
-		fmt.Printf("Update Error: %v\n", err)
-		ack.Message = err.Error()
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			ack.Message = "configuration cannot be saved as there is unique constarint mismatch"
+		} else {
+			ack.Message = err.Error()
+		}
 	} else {
 		ack.OK = true
 		ack.Message = "Updated Successfully"
@@ -180,7 +183,11 @@ func addRow(c *gin.Context) {
 	}
 
 	if err != nil {
-		ack.Message = err.Error()
+		if strings.Contains(err.Error(), "UNIQUE constraint failed") {
+			ack.Message = "configuration cannot be saved as there is unique constarint mismatch"
+		} else {
+			ack.Message = err.Error()
+		}
 	} else {
 		ack.OK = true
 		ack.Message = "Inserted Successfully"
