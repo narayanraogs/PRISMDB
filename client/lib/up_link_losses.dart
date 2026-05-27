@@ -59,7 +59,11 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
             jsonDecode(txResp.body) as Map<String, dynamic>);
         if (temp.ok) {
           _configNames = [];
-          _configNames.addAll(temp.values);
+          for (var val in temp.values) {
+            if (!val.toLowerCase().contains("copy")) {
+              _configNames.add(val);
+            }
+          }
           _configSelected = _configNames.isNotEmpty ? _configNames.first : "";
           if (widget.isCopyMode) {
             _selectedConfigs = [];
@@ -87,7 +91,11 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
             jsonDecode(rxResp.body) as Map<String, dynamic>);
         if (temp.ok) {
           _testPhases = [];
-          _testPhases.addAll(temp.values);
+          for (var val in temp.values) {
+            if (!val.toLowerCase().contains("copy")) {
+              _testPhases.add(val);
+            }
+          }
           _testPhaseSelected = _testPhases.isNotEmpty ? _testPhases.first : "";
           _tpController.text = _testPhaseSelected;
           if (widget.isCopyMode) {
@@ -193,10 +201,10 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                side: BorderSide(color: Colors.grey.shade300),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Cancel", style: TextStyle(color: Colors.black87)),
+              child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
           Expanded(
@@ -375,7 +383,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
              padding: const EdgeInsets.symmetric(vertical: 8),
              constraints: const BoxConstraints(minWidth: 80, minHeight: 40),
              alignment: Alignment.centerLeft,
-             child: Text(value.isEmpty ? 'DoubleClick to edit' : value, style: TextStyle(color: value.isEmpty ? Colors.grey.shade400 : Colors.black87)),
+             child: Text(value.isEmpty ? 'DoubleClick to edit' : value, style: TextStyle(color: value.isEmpty ? Colors.grey.shade400 : Theme.of(context).colorScheme.onSurface)),
           )
         )
       );
@@ -414,33 +422,12 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
         ));
       }
     } else {
-      children.add(Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.indigo.withOpacity(0.05),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.indigo.withOpacity(0.1)),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Test Phase", style: TextStyle(fontSize: 12, color: Colors.indigo)),
-                Text(_testPhaseSelected, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-            Container(width: 1, height: 30, color: Colors.grey.shade300),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text("Configuration", style: TextStyle(fontSize: 12, color: Colors.indigo)),
-                Text(_configSelected, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ],
-            ),
-          ],
-        ),
+      children.add(Row(
+        children: [
+          Expanded(child: _getTPDD()),
+          const SizedBox(width: 16),
+          Expanded(child: _getConfigDD()),
+        ],
       ));
     }
 
@@ -459,7 +446,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
         children.add(Text("Loss Profile: $cfg", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.indigo)));
         children.add(const SizedBox(height: 8));
         children.add(Container(
-          decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(12)),
+          decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor), borderRadius: BorderRadius.circular(12)),
           child: table,
         ));
       }
@@ -467,7 +454,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
       children.add(const SizedBox(height: 24));
       var table = _buildTableForConfig(_configSelected, _tableData, _tableKey, _rowNoController);
       children.add(Container(
-        decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(12)),
+        decoration: BoxDecoration(border: Border.all(color: Theme.of(context).dividerColor), borderRadius: BorderRadius.circular(12)),
         child: table,
       ));
     }
@@ -541,8 +528,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
     
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -552,8 +538,8 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
           Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Text(
                widget.isCopyMode ? "Copy Loss Profile" : (widget.global.rowSelected.isEmpty ? "Create Loss Profile" : "Edit Loss Profile"), 
@@ -576,8 +562,8 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: button
           ),
@@ -587,32 +573,36 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
   }
 
   Widget _getTPDD() {
-    return TextFormField(
-      controller: _tpController,
-      onChanged: (val) {
-        _testPhaseSelected = val;
+    List<DropdownMenuItem<String>> items = [];
+    for (String tp in _testPhases) {
+      items.add(DropdownMenuItem(value: tp, child: Text(tp)));
+    }
+
+    String? selectedValue;
+    if (_testPhaseSelected.isNotEmpty) {
+      selectedValue = _testPhaseSelected;
+      if (!_testPhases.contains(_testPhaseSelected)) {
+        items.insert(0, DropdownMenuItem(value: _testPhaseSelected, child: Text(_testPhaseSelected)));
+      }
+    } else if (_testPhases.isNotEmpty) {
+      selectedValue = _testPhases.first;
+      _testPhaseSelected = selectedValue;
+      _tpController.text = _testPhaseSelected;
+    }
+
+    return DropdownButtonFormField<String>(
+      items: items,
+      value: selectedValue,
+      onChanged: (value) {
+        _testPhaseSelected = value ?? "";
+        _tpController.text = _testPhaseSelected;
+        setState(() {});
       },
       decoration: InputDecoration(
         labelText: "Test Phase",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-        suffixIcon: PopupMenuButton<String>(
-          icon: const Icon(Icons.arrow_drop_down),
-          onSelected: (String value) {
-            _tpController.text = value;
-            _testPhaseSelected = value;
-            setState(() {});
-          },
-          itemBuilder: (BuildContext context) {
-            return _testPhases.map((String choice) {
-              return PopupMenuItem<String>(
-                value: choice,
-                child: Text(choice),
-              );
-            }).toList();
-          },
-        ),
       ),
     );
   }
@@ -622,9 +612,21 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
     for (String cfg in _configNames) {
       items.add(DropdownMenuItem(value: cfg, child: Text(cfg)));
     }
+
+    String? selectedValue;
+    if (_configSelected.isNotEmpty) {
+      selectedValue = _configSelected;
+      if (!_configNames.contains(_configSelected)) {
+        items.insert(0, DropdownMenuItem(value: _configSelected, child: Text(_configSelected)));
+      }
+    } else if (_configNames.isNotEmpty) {
+      selectedValue = _configNames.first;
+      _configSelected = selectedValue;
+    }
+
     return DropdownButtonFormField<String>(
       items: items,
-      value: _configSelected.isEmpty && _configNames.isNotEmpty ? _configNames.first : _configSelected,
+      value: selectedValue,
       onChanged: (value) {
         _configSelected = value ?? "";
         setState(() {});
@@ -643,9 +645,21 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
     for (String tp in _testPhases) {
       items.add(DropdownMenuItem(value: tp, child: Text(tp)));
     }
+
+    String? selectedValue;
+    if (_sourceTestPhaseSelected.isNotEmpty) {
+      selectedValue = _sourceTestPhaseSelected;
+      if (!_testPhases.contains(_sourceTestPhaseSelected)) {
+        items.insert(0, DropdownMenuItem(value: _sourceTestPhaseSelected, child: Text(_sourceTestPhaseSelected)));
+      }
+    } else if (_testPhases.isNotEmpty) {
+      selectedValue = _testPhases.first;
+      _sourceTestPhaseSelected = selectedValue;
+    }
+
     return DropdownButtonFormField<String>(
       items: items,
-      value: _sourceTestPhaseSelected.isEmpty && _testPhases.isNotEmpty ? _testPhases.first : _sourceTestPhaseSelected,
+      value: selectedValue,
       onChanged: (value) {
         _sourceTestPhaseSelected = value ?? "";
         _multiTableData.clear();
@@ -716,7 +730,7 @@ class StateUpLinkLosses extends State<UpLinkLosses> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
              Text(_selectedConfigs.isEmpty ? "Select Configs" : "\${_selectedConfigs.length} Selected"),
-             const Icon(Icons.arrow_drop_down, color: Colors.black54),
+             Icon(Icons.arrow_drop_down, color: Theme.of(context).colorScheme.onSurfaceVariant),
           ],
         ),
       ),

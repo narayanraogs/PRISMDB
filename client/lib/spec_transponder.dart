@@ -100,8 +100,7 @@ class StateSpecTransponder extends State<SpecTransponder> {
     return Container(
       
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -190,8 +189,8 @@ class StateSpecTransponder extends State<SpecTransponder> {
           labelText: label,
           filled: true,
           fillColor: Colors.grey.withOpacity(0.04),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
         validator: validator,
@@ -206,8 +205,8 @@ class StateSpecTransponder extends State<SpecTransponder> {
       decoration: InputDecoration(
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       ),
       items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),

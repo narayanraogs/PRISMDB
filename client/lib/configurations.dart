@@ -118,7 +118,9 @@ class StateConfigurations extends State<Configurations> {
       );
       if (resp.statusCode == 200) {
         var temp = ValueResponse.fromJson(jsonDecode(resp.body) as Map<String, dynamic>);
-        if (temp.ok) return temp.values;
+        if (temp.ok) {
+          return temp.values.where((val) => !val.toLowerCase().contains("copy")).toList();
+        }
       }
     } catch (e) {
       debugPrint("Error fetching $key: $e");
@@ -240,10 +242,10 @@ class StateConfigurations extends State<Configurations> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                side: BorderSide(color: Colors.grey.shade300),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Cancel", style: TextStyle(color: Colors.black87)),
+              child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
           const SizedBox(width: 16),
@@ -376,8 +378,8 @@ class StateConfigurations extends State<Configurations> {
           labelText: label,
           filled: true,
           fillColor: fillColor ?? Colors.grey.withOpacity(0.04),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
         validator: validator,
@@ -450,8 +452,7 @@ class StateConfigurations extends State<Configurations> {
     
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -461,8 +462,8 @@ class StateConfigurations extends State<Configurations> {
           Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Text(
                widget.global.rowSelected.isEmpty ? "Create Configuration" : "Edit Configuration", 
@@ -485,8 +486,8 @@ class StateConfigurations extends State<Configurations> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: button
           ),
@@ -512,8 +513,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Transmitter Name",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -540,8 +541,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Transponder Name",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -568,8 +569,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Payload Name",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -596,8 +597,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "TSM Configuration Name",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -624,8 +625,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Cortex IFM",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -652,8 +653,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Programmable Attn Used?",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -680,8 +681,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Power Meter Channel",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -708,8 +709,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Receiver Name",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -736,8 +737,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Select Config Type",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {
@@ -764,8 +765,8 @@ class StateConfigurations extends State<Configurations> {
         labelText: "Device Profile Name",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (String? value) {

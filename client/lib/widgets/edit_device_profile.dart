@@ -75,18 +75,20 @@ class _EditDeviceProfileState extends State<EditDeviceProfile> {
              for (var row in tableDetails.details) {
                if (row.details.length > nameIdx && row.details.length > typeIdx) {
                  String name = row.details[nameIdx];
-                 String type = row.details[typeIdx]; // keep original case usually?
-                 
-                 _allDevices.add(name);
-                 
-                 // Normalize type key for easier matching (e.g. 'Spectrum Analyzer' -> 'SA'?? Or just use raw)
-                 // Based on typical DBs, types are likely 'SA', 'VSA', 'PM', etc. matching the columns.
-                 // Let's store raw type.
-                 
-                 if (!_devicesByType.containsKey(type)) {
-                   _devicesByType[type] = [];
+                 if (!name.toLowerCase().contains("copy")) {
+                   String type = row.details[typeIdx]; // keep original case usually?
+                   
+                   _allDevices.add(name);
+                   
+                   // Normalize type key for easier matching (e.g. 'Spectrum Analyzer' -> 'SA'?? Or just use raw)
+                   // Based on typical DBs, types are likely 'SA', 'VSA', 'PM', etc. matching the columns.
+                   // Let's store raw type.
+                   
+                   if (!_devicesByType.containsKey(type)) {
+                     _devicesByType[type] = [];
+                   }
+                   _devicesByType[type]!.add(name);
                  }
-                 _devicesByType[type]!.add(name);
                }
              }
            }
@@ -128,8 +130,7 @@ class _EditDeviceProfileState extends State<EditDeviceProfile> {
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -138,8 +139,8 @@ class _EditDeviceProfileState extends State<EditDeviceProfile> {
            Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Text(
                _isEditing ? "Edit Device Profile" : "Create Device Profile", 
@@ -183,8 +184,8 @@ class _EditDeviceProfileState extends State<EditDeviceProfile> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Padding(
                padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
@@ -273,8 +274,8 @@ class _EditDeviceProfileState extends State<EditDeviceProfile> {
       labelText: label,
       filled: true,
       fillColor: Colors.grey.withOpacity(0.04),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }

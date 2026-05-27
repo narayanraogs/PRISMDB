@@ -47,10 +47,10 @@ class StateAutoGenerateFrequencies extends State<AutoGenerateFrequencies> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                side: BorderSide(color: Colors.grey.shade300),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Cancel", style: TextStyle(color: Colors.black87)),
+              child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
           const SizedBox(width: 16),
@@ -78,8 +78,7 @@ class StateAutoGenerateFrequencies extends State<AutoGenerateFrequencies> {
 
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -89,8 +88,8 @@ class StateAutoGenerateFrequencies extends State<AutoGenerateFrequencies> {
           Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: const Text(
                "Auto Generate Frequencies", 
@@ -118,7 +117,7 @@ class StateAutoGenerateFrequencies extends State<AutoGenerateFrequencies> {
                         const Expanded(
                           child: Text(
                             'Caution: Auto Populate will remove existing entries for this configuration.',
-                            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500),
+                            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w500),
                           ),
                         ),
                       ],
@@ -129,7 +128,7 @@ class StateAutoGenerateFrequencies extends State<AutoGenerateFrequencies> {
                     decoration: BoxDecoration(
                       color: Colors.grey.withOpacity(0.04),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: CheckboxListTile(
                       value: _addGPSFrequencies,
@@ -150,8 +149,8 @@ class StateAutoGenerateFrequencies extends State<AutoGenerateFrequencies> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: button
           ),

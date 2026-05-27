@@ -532,8 +532,7 @@ class StateCreate extends State<Create> {
       width: width,
       height: height,
       margin: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
@@ -542,7 +541,7 @@ class StateCreate extends State<Create> {
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: Colors.grey.shade100, width: 1.0),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerLowest, width: 1.0),
       ),
       child: Padding(padding: const EdgeInsets.all(16.0), child: child),
     );
@@ -595,7 +594,7 @@ class StateCreate extends State<Create> {
         borderRadius: BorderRadius.circular(8.0),
       ),
       enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
         borderRadius: BorderRadius.circular(8.0),
       ),
       focusedBorder: OutlineInputBorder(

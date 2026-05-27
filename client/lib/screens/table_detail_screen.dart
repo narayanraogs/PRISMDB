@@ -203,23 +203,30 @@ class _TableDetailViewState extends State<TableDetailView> {
           if (newRow.length > 1) newRow.removeAt(1); // ID is offset at index 1
           break;
         case 'specpl':
-        case 'spectp':
-        case 'configurations':
-        case 'lossmeasurementfrequencies':
         case 'tsmconfigurations':
         case 'downlinkloss':
-        case 'testphases':
-        case 'testphase':
-        case 'tests':
         case 'uplinkloss':
+        case 'tests':
         case 'deviceprofile':
-        case 'frequencyprofile':
-        case 'pulseprofile':
-        case 'powerprofile':
-        case 'spectrumprofile':
-        case 'trmprofile':
-        case 'downlinkpowerprofile':
           if (newRow.isNotEmpty) newRow.removeAt(0); // ID is at index 0 and dropped by backend
+          break;
+        case 'configurations':
+          if (newRow.isNotEmpty) {
+            newRow.removeAt(0); // Drop ID
+            // Reorder to match backend handleInsertConfigurations expectation:
+            // newRow has: [ConfigName (0), ConfigType (1), RxName (2), TxName (3), TpName (4), PayloadName (5), TSMConfigurationName (6), CortexIFM (7), IntermediateFrequency (8), ProgrammableAttnUsed (9), DeviceProfileName (10)]
+            // Backend expects: [ConfigName (0), ConfigType (1), RxName (2), TxName (3), TpName (4), TSMConfigurationName (5), CortexIFM (6), IntermediateFrequency (7), PayloadName (8), DeviceProfileName (9), ProgrammableAttnUsed (10)]
+            if (newRow.length >= 11) {
+              List<String> mappedRow = List.from(newRow);
+              mappedRow[5] = newRow[6]; // TSMConfigurationName
+              mappedRow[6] = newRow[7]; // CortexIFM
+              mappedRow[7] = newRow[8]; // IntermediateFrequency
+              mappedRow[8] = newRow[5]; // PayloadName
+              mappedRow[9] = newRow[10]; // DeviceProfileName
+              mappedRow[10] = newRow[9]; // ProgrammableAttnUsed
+              newRow = mappedRow;
+            }
+          }
           break;
       }
 
@@ -344,8 +351,8 @@ class _TableDetailViewState extends State<TableDetailView> {
                 bottom: 0,
                 width: columnWidth + 24, // width + left margin
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
                   ),
                   child: Column(
                     children: [
@@ -368,8 +375,8 @@ class _TableDetailViewState extends State<TableDetailView> {
                 bottom: 0,
                 width: actionsWidth + 24, // width + right margin
                 child: Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
                   ),
                   child: Column(
                     children: [
@@ -417,7 +424,7 @@ class _TableDetailViewState extends State<TableDetailView> {
                           widget.tableName, 
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: const Color(0xFF3E2723)
+                            color: Theme.of(context).colorScheme.onSurface
                           )
                         ),
                         if (_columnFilters.isNotEmpty)
@@ -550,7 +557,12 @@ class _TableDetailViewState extends State<TableDetailView> {
         }
         if (isFull) {
           for (int i = 1; i < row.length; i++) {
-            cells.add(DataCell(SizedBox(width: columnWidth, child: Text(row[i], overflow: TextOverflow.ellipsis))));
+            final headerName = _tableData!.headers[i].toLowerCase();
+            if (headerName == 'profile') {
+              cells.add(DataCell(SizedBox(width: columnWidth, child: _buildProfileCell(row[i], columnWidth))));
+            } else {
+              cells.add(DataCell(SizedBox(width: columnWidth, child: Text(row[i], overflow: TextOverflow.ellipsis))));
+            }
           }
         }
         if (isFull || isRightFixed) {
@@ -606,7 +618,12 @@ class _TableDetailViewState extends State<TableDetailView> {
     }
     if (isFull) {
       for (int i = 1; i < row.length; i++) {
-        cells.add(DataCell(SizedBox(width: columnWidth, child: Text(row[i], overflow: TextOverflow.ellipsis))));
+        final headerName = _tableData!.headers[i].toLowerCase();
+        if (headerName == 'profile') {
+          cells.add(DataCell(SizedBox(width: columnWidth, child: _buildProfileCell(row[i], columnWidth))));
+        } else {
+          cells.add(DataCell(SizedBox(width: columnWidth, child: Text(row[i], overflow: TextOverflow.ellipsis))));
+        }
       }
     }
     if (isFull || isRightFixed) {
@@ -629,7 +646,7 @@ class _TableDetailViewState extends State<TableDetailView> {
                 h, 
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isFiltered ? Theme.of(context).colorScheme.primary : Colors.black87,
+                  color: isFiltered ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
@@ -652,15 +669,15 @@ class _TableDetailViewState extends State<TableDetailView> {
               style: const TextStyle(fontSize: 13),
               decoration: InputDecoration(
                 hintText: "Filter...",
-                hintStyle: TextStyle(color: Colors.grey.withOpacity(0.5), fontSize: 12),
+                hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12),
                 isDense: true,
                 contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 filled: true,
-                fillColor: Colors.white,
+                fillColor: Theme.of(context).colorScheme.surfaceContainer,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.withOpacity(0.2))),
                 enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.withOpacity(0.2))),
                 focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 1)),
-                prefixIcon: const Icon(Icons.search, size: 14),
+                prefixIcon: Icon(Icons.search, size: 14, color: Theme.of(context).colorScheme.onSurface),
               ),
             ),
           ),
@@ -855,5 +872,52 @@ class _TableDetailViewState extends State<TableDetailView> {
         if (mounted) setState(() => _isLoading = false);
       }
     }
+  }
+
+  Widget _buildProfileCell(String profileText, double columnWidth) {
+    if (profileText.trim().isEmpty) {
+      return const Text("Empty", style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey));
+    }
+    
+    final lines = profileText.trim().split('\n');
+    final count = lines.length;
+    
+    String summary = "";
+    if (count > 0) {
+      final firstLine = lines.first.split(',');
+      if (firstLine.length >= 3) {
+        summary = " (${firstLine[1]}: ${firstLine[2]} dB)";
+      }
+    }
+    
+    return Tooltip(
+      message: profileText,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(color: Colors.blue.withOpacity(0.25)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.analytics_outlined, size: 14, color: Colors.blue),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                "$count pts$summary",
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blue,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

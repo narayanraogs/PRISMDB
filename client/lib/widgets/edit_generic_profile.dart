@@ -141,8 +141,7 @@ class _EditGenericProfileState extends State<EditGenericProfile> {
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -151,8 +150,8 @@ class _EditGenericProfileState extends State<EditGenericProfile> {
            Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Text(
                _isEditing ? "Edit ${widget.tableName}" : "Create New ${widget.tableName} Entry", 
@@ -174,8 +173,8 @@ class _EditGenericProfileState extends State<EditGenericProfile> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Padding(
                padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
@@ -341,8 +340,8 @@ class _EditGenericProfileState extends State<EditGenericProfile> {
       labelText: label,
       filled: true,
       fillColor: Colors.grey.withOpacity(0.04),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }

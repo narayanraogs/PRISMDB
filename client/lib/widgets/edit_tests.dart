@@ -127,9 +127,11 @@ class _EditTestsState extends State<EditTests> {
              for (var row in tableDetails.details) {
                if (row.details.length > typeIdx && row.details.length > nameIdx) {
                  String name = row.details[nameIdx];
-                 String type = row.details[typeIdx];
-                 names.add(name);
-                 typeMap[name] = type;
+                 if (!name.toLowerCase().contains("copy")) {
+                   String type = row.details[typeIdx];
+                   names.add(name);
+                   typeMap[name] = type;
+                 }
                }
              }
            }
@@ -189,7 +191,7 @@ class _EditTestsState extends State<EditTests> {
              for (var row in tableDetails.details) {
                if (row.details.length > colIdx) {
                  String val = row.details[colIdx];
-                 if (val != "NULL" && val.isNotEmpty) {
+                 if (val != "NULL" && val.isNotEmpty && !val.toLowerCase().contains("copy")) {
                    values.add(val);
                  }
                }
@@ -248,8 +250,7 @@ class _EditTestsState extends State<EditTests> {
   Widget build(BuildContext context) {
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -259,8 +260,8 @@ class _EditTestsState extends State<EditTests> {
            Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Text(
                _isEditing ? "Edit Test" : "Create New Test", 
@@ -283,8 +284,8 @@ class _EditTestsState extends State<EditTests> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: _buildButtons()
           ),
@@ -458,8 +459,8 @@ class _EditTestsState extends State<EditTests> {
       labelText: label,
       filled: true,
       fillColor: Colors.grey.withOpacity(0.04),
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
   }

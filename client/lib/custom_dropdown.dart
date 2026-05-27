@@ -111,8 +111,8 @@ class StateModulationDropDownMenu extends State<ModulationDropdown> {
         labelText: "Modulation",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (value) {
@@ -178,8 +178,8 @@ class StateBurstModeDropdown extends State<BurstModeDropdown> {
         labelText: "Burst Mode",
         filled: true,
         fillColor: Colors.grey.withOpacity(0.04),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       ),
       onChanged: (value) {

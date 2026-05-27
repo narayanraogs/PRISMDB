@@ -167,7 +167,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 )
                               : null,
                           boxShadow: isSelected 
-                              ? [BoxShadow(color: Colors.brown.withOpacity(0.1), blurRadius: 4, offset: const Offset(0, 2))]
+                              ? [BoxShadow(color: Colors.black.withOpacity(0.3), blurRadius: 4, offset: const Offset(0, 2))]
                               : null,
                         ),
                         child: Row(
@@ -209,8 +209,8 @@ class _HomeScreenState extends State<HomeScreen> {
               child: OutlinedButton.icon(
                 onPressed: _onDisconnect,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.brown,
-                  side: const BorderSide(color: Colors.brown),
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(color: Colors.redAccent),
                   minimumSize: const Size(double.infinity, 48),
                 ),
                 icon: const Icon(Icons.logout, size: 18),
@@ -612,7 +612,7 @@ class _TablesViewState extends State<TablesView> {
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: isExpanded ? Colors.white : const Color(0xFF3E2723),
+                                    color: isExpanded ? Colors.white : Theme.of(context).colorScheme.onSurface,
                                   ),
                                 ),
                                 const SizedBox(width: 12),
@@ -627,7 +627,7 @@ class _TablesViewState extends State<TablesView> {
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      color: isExpanded ? Colors.white : Colors.grey[700]
+                                      color: isExpanded ? Colors.white : Theme.of(context).colorScheme.onSurfaceVariant
                                     ),
                                   ),
                                 ),
@@ -768,7 +768,7 @@ class _TableCardState extends State<_TableCard> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5), // Light theme-matching background
+            color: Theme.of(context).colorScheme.surfaceContainer, // Theme-matching container background
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: _isHovered ? widget.color : Colors.grey.withOpacity(0.2),
@@ -832,10 +832,10 @@ class _TableCardState extends State<_TableCard> {
                             children: [
                               Text(
                                 "${widget.rows}",
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 32,
                                   fontWeight: FontWeight.w800,
-                                  color: Color(0xFF2D3748),
+                                  color: Theme.of(context).colorScheme.onSurface,
                                   height: 1.0,
                                 ),
                               ),
@@ -867,13 +867,16 @@ class _TableCardState extends State<_TableCard> {
                   child: Container(
                     height: 120, // Expanded height for more attribute space (adapted for rectangular card)
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: Theme.of(context).colorScheme.surfaceContainer,
                       borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
                       border: Border(top: BorderSide(color: widget.color.withOpacity(0.1))),
                       gradient: LinearGradient(
                         begin: Alignment.bottomCenter,
                         end: Alignment.topCenter,
-                        colors: [const Color(0xFFF5F5F5), const Color(0xFFF5F5F5).withOpacity(0.95)],
+                        colors: [
+                          Theme.of(context).colorScheme.surfaceContainer,
+                          Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.95)
+                        ],
                       )
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -894,13 +897,13 @@ class _TableCardState extends State<_TableCard> {
                                       children: _headers!.map((h) => Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                         decoration: BoxDecoration(
-                                          color: Colors.grey[100],
+                                          color: Theme.of(context).colorScheme.surfaceContainerLow,
                                           borderRadius: BorderRadius.circular(4),
-                                          border: Border.all(color: Colors.grey[300]!)
+                                          border: Border.all(color: Theme.of(context).colorScheme.outlineVariant)
                                         ),
                                         child: Text(
                                           h, 
-                                          style: TextStyle(fontSize: 9, color: Colors.grey[700]),
+                                          style: TextStyle(fontSize: 9, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                         ),
                                       )).toList(),
                                     ),
@@ -977,7 +980,7 @@ class _SelectionCard extends StatelessWidget {
             const SizedBox(height: 16),
             Text(title, style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isSelected ? Theme.of(context).colorScheme.primary : Colors.black87
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurface
             )),
             const SizedBox(height: 4),
             Text(subtitle, style: TextStyle(
@@ -1159,8 +1162,7 @@ class _ValidationCardState extends State<_ValidationCard> with SingleTickerProvi
           const SizedBox(height: 8),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white,
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text("${widget.table.items} Items", style: TextStyle(color: Colors.grey[800], fontSize: 13, fontWeight: FontWeight.bold)),
@@ -1190,8 +1192,7 @@ class _ValidationCardState extends State<_ValidationCard> with SingleTickerProvi
     if (widget.table.warningList.isNotEmpty) issues.addAll(widget.table.warningList);
     
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _getColor().withOpacity(0.5), width: 2),
       ),

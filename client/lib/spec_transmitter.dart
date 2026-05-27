@@ -198,10 +198,10 @@ class StateSpecTransmitter extends State<SpecTransmitter> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                side: BorderSide(color: Colors.grey.shade300),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Cancel", style: TextStyle(color: Colors.black87)),
+              child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
           const SizedBox(width: 16),
@@ -337,7 +337,7 @@ class StateSpecTransmitter extends State<SpecTransmitter> {
              controller: _allowedFreqDeviation,
              label: "Allowed Freq Deviation",
              readOnly: true, // Calculated automatically
-             fillColor: Colors.grey.shade100,
+             fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
           ),
           _buildTextField(
              controller: _allowedPowerDeviation,
@@ -388,8 +388,8 @@ class StateSpecTransmitter extends State<SpecTransmitter> {
           labelText: label,
           filled: true,
           fillColor: fillColor ?? Colors.grey.withOpacity(0.04),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
         validator: validator,
@@ -440,8 +440,7 @@ class StateSpecTransmitter extends State<SpecTransmitter> {
     return Container(
       
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -451,8 +450,8 @@ class StateSpecTransmitter extends State<SpecTransmitter> {
           Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Text(
                widget.global.rowSelected.isEmpty ? "Create New Transmitter" : "Edit Transmitter", 
@@ -475,8 +474,8 @@ class StateSpecTransmitter extends State<SpecTransmitter> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: button
           ),

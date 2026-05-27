@@ -408,13 +408,13 @@ class StateSpecPayload extends State<SpecPayload> {
     bool isNew = widget.global.rowSelected.isEmpty;
     return Container(
        clipBehavior: Clip.antiAlias,
-       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+       decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, borderRadius: BorderRadius.circular(16)),
        child: Column(
          crossAxisAlignment: CrossAxisAlignment.stretch,
          children: [
            Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-             decoration: BoxDecoration(color: Colors.white, border: Border(bottom: BorderSide(color: Colors.grey.shade200))),
+             decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface, border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor))),
              child: Text(isNew ? "Add Spec Payload" : "Edit Spec Payload", style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
            ),
            Expanded(
@@ -466,7 +466,7 @@ class StateSpecPayload extends State<SpecPayload> {
            ),
            Container(
              padding: EdgeInsets.zero,
-             decoration: BoxDecoration(color: Colors.grey.shade50, border: Border(top: BorderSide(color: Colors.grey.shade200))),
+             decoration: BoxDecoration(color: Theme.of(context).colorScheme.surfaceContainerLow, border: Border(top: BorderSide(color: Theme.of(context).dividerColor))),
              child: Padding(
                padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
                child: Row(

@@ -83,10 +83,10 @@ class StateOBWPowerProfile extends State<OBWPowerProfile> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                side: BorderSide(color: Colors.grey.shade300),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
-              child: const Text("Cancel", style: TextStyle(color: Colors.black87)),
+              child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
           const SizedBox(width: 16),
@@ -161,8 +161,8 @@ class StateOBWPowerProfile extends State<OBWPowerProfile> {
           labelText: label,
           filled: true,
           fillColor: fillColor ?? Colors.grey.withOpacity(0.04),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
+          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
         validator: validator,
@@ -200,8 +200,7 @@ class StateOBWPowerProfile extends State<OBWPowerProfile> {
     
     return Container(
       clipBehavior: Clip.antiAlias,
-      decoration: BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -211,8 +210,8 @@ class StateOBWPowerProfile extends State<OBWPowerProfile> {
           Container(
              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
              decoration: BoxDecoration(
-               color: Colors.white,
-               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: Text(
                widget.global.rowSelected.isEmpty ? "Create Power Profile" : "Edit Power Profile", 
@@ -235,8 +234,8 @@ class StateOBWPowerProfile extends State<OBWPowerProfile> {
           
           Container(
              decoration: BoxDecoration(
-               color: Colors.grey.shade50,
-               border: Border(top: BorderSide(color: Colors.grey.shade200)),
+               color: Theme.of(context).colorScheme.surfaceContainerLow,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
              ),
              child: button
           ),
