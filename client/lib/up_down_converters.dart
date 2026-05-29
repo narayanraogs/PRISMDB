@@ -330,6 +330,7 @@ class StateUpDownConverters extends State<UpDownConverters> {
     var clientID = widget.global.clientID;
     var tableName = getTableName(widget.global.tableSelected);
     List<String> values = [];
+    values.add('0'); // Index 0: ID placeholder
     values.add(_nameController.text);
     var inpFreq = getFrequency(_inputFreqController.text, inputFreqResolution);
     values.add('$inpFreq');

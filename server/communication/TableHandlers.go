@@ -60,7 +60,7 @@ func getTableDataWait(q *database.Queries, ctx context.Context, tableName string
 				// Handle pointers (sql.NullString, etc often appear as struct fields or ptrs)
 				if field.Kind() == reflect.Ptr {
 					if field.IsNil() {
-						rowStrings = append(rowStrings, "NULL")
+						rowStrings = append(rowStrings, "")
 						continue
 					} else {
 						field = field.Elem()
@@ -73,7 +73,7 @@ func getTableDataWait(q *database.Queries, ctx context.Context, tableName string
 					validField := field.FieldByName("Valid")
 					if validField.IsValid() && validField.Kind() == reflect.Bool {
 						if !validField.Bool() {
-							rowStrings = append(rowStrings, "NULL")
+							rowStrings = append(rowStrings, "")
 							continue
 						}
 						// If valid, use the Value-like field (String, Int64, etc)
