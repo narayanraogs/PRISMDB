@@ -22,6 +22,10 @@ func Connect(path string) bool {
 		return false
 	}
 	db.SetMaxOpenConns(1)
+	
+	// Sanitize legacy databases by replacing empty strings with NULL in integer columns
+	db.Exec("UPDATE TSMConfigurations SET AttnNumber = NULL WHERE AttnNumber = ''")
+	
 	dbObject = New(db)
 	return true
 }

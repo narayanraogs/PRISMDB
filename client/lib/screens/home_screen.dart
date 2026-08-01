@@ -97,33 +97,7 @@ class _HomeScreenState extends State<HomeScreen> {
           _buildSidebar(),
           VerticalDivider(thickness: 1, width: 1, color: Theme.of(context).dividerColor),
           Expanded(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: _buildContent(),
-                ),
-                Positioned(
-                  top: 16,
-                  right: 16,
-                  child: Row(
-                    children: [
-                      Icon(
-                        PrismApp.of(context).isLightMode ? Icons.light_mode : Icons.dark_mode, 
-                        size: 20, 
-                        color: Theme.of(context).colorScheme.primary
-                      ),
-                      const SizedBox(width: 8),
-                      Switch(
-                        value: PrismApp.of(context).isLightMode,
-                        onChanged: (val) {
-                          PrismApp.of(context).toggleTheme();
-                        },
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+            child: _buildContent(),
           ),
         ],
       ),
@@ -232,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           if (_isConnected)
             Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: OutlinedButton.icon(
                 onPressed: _onDisconnect,
                 style: OutlinedButton.styleFrom(
@@ -244,6 +218,26 @@ class _HomeScreenState extends State<HomeScreen> {
                 label: const Text("Disconnect"),
               ),
             ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  PrismApp.of(context).isLightMode ? Icons.light_mode : Icons.dark_mode, 
+                  size: 20, 
+                  color: Theme.of(context).colorScheme.primary
+                ),
+                const SizedBox(width: 8),
+                Switch(
+                  value: PrismApp.of(context).isLightMode,
+                  onChanged: (val) {
+                    PrismApp.of(context).toggleTheme();
+                  },
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
         ],
       ),
@@ -713,7 +707,7 @@ class _TablesViewState extends State<TablesView> {
                                   return _TableCard(
                                     name: table.name, 
                                     rows: table.itemCount, 
-                                    color: Colors.blue,
+                                    color: Theme.of(context).colorScheme.primary,
                                     onTap: () => widget.onTableTap(table.name),
                                   );
                                 },

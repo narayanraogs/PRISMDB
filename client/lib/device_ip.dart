@@ -23,7 +23,7 @@ class StateDeviceIP extends State<DeviceIP> {
   
   // Make and Type variables and lists
   List<String> _deviceMakes = [
-    'N9040B', 'N9030B', 'N9040A', 
+    'N9040B', 'N9030B', 'N9030A', 
     'E8267D', 'E8257D', 
     'NRX', 'ML2488B', 'N1912A', 
     'Cortex', 'TTCP', 'DataPattern', 'TSM'
@@ -250,11 +250,86 @@ class StateDeviceIP extends State<DeviceIP> {
     });
   }
 
+  Widget _buildCard({required Widget child, EdgeInsetsGeometry? padding}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(20.0),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5), width: 1.0),
+      ),
+      child: Padding(
+        padding: padding ?? const EdgeInsets.all(28.0),
+        child: child,
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 24.0),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: Theme.of(context).colorScheme.primary, size: 22),
+          ),
+          const SizedBox(width: 16),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  InputDecoration _buildInputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: Colors.transparent,
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5))),
+      enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.5))),
+      focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2)),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller, 
+    required String label, 
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      decoration: _buildInputDecoration(label),
+      validator: validator,
+    );
+  }
+
   Widget getButton(BuildContext context) {
     bool isNew = widget.global.rowSelected.trim().isEmpty;
     
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 16.0),
+      padding: const EdgeInsets.symmetric(vertical: 24.0, horizontal: 32.0),
       child: Row(
         mainAxisSize: MainAxisSize.max,
         children: [
@@ -266,13 +341,13 @@ class StateDeviceIP extends State<DeviceIP> {
               },
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              child: Text("Cancel", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+              child: Text("Cancel", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Theme.of(context).colorScheme.onSurface)),
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 24),
           Expanded(
             child: FilledButton.icon(
               onPressed: () {
@@ -282,11 +357,12 @@ class StateDeviceIP extends State<DeviceIP> {
                 }
                 update(!isNew);
               },
-              icon: Icon(isNew ? Icons.add : Icons.save, size: 20),
-              label: Text(isNew ? "Add Device" : "Save Changes"),
+              icon: Icon(isNew ? Icons.add_circle_outline : Icons.save_outlined, size: 22),
+              label: Text(isNew ? "Add Device" : "Save Changes", style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 0,
               ),
             ),
           ),
@@ -298,79 +374,84 @@ class StateDeviceIP extends State<DeviceIP> {
   List<Widget> getChildren(BuildContext context) {
     List<Widget> children = [];
 
-    // Common Fields
-    children.add(_buildTextField(
-      controller: _nameController,
-      label: "Device Name",
-      validator: (value) => (value == null || value.isEmpty) ? "Device Name is required" : null,
-    ));
-    
-    // Make Dropdown
-    children.add(Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
-      child: DropdownButtonFormField<String>(
-        items: _deviceMakes.map((String val) {
-          return DropdownMenuItem<String>(
-            value: val,
-            child: Text(val),
-          );
-        }).toList(),
-        value: _selectedMake,
-        decoration: InputDecoration(
-          labelText: "Device Make",
-          filled: true,
-          fillColor: Colors.grey.withOpacity(0.04),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-        onChanged: (val) {
-          setState(() {
-            _selectedMake = val;
-            _updateAvailableTypes();
-          });
-        },
-        validator: (value) => value == null ? "Select Device Make" : null,
+    // Basic Information Card
+    children.add(_buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader("Basic Information", Icons.info_outline_rounded),
+          _buildTextField(
+            controller: _nameController,
+            label: "Device Name",
+            validator: (value) => (value == null || value.isEmpty) ? "Device Name is required" : null,
+          ),
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            items: _deviceMakes.map((String val) {
+              return DropdownMenuItem<String>(
+                value: val,
+                child: Text(val),
+              );
+            }).toList(),
+            value: _selectedMake,
+            decoration: _buildInputDecoration("Device Make"),
+            onChanged: (val) {
+              setState(() {
+                _selectedMake = val;
+                _updateAvailableTypes();
+              });
+            },
+            validator: (value) => value == null ? "Select Device Make" : null,
+          ),
+          const SizedBox(height: 20),
+          DropdownButtonFormField<String>(
+            items: _availableTypes.map((String val) {
+              return DropdownMenuItem<String>(
+                value: val,
+                child: Text(val),
+              );
+            }).toList(),
+            value: _selectedType,
+            decoration: _buildInputDecoration("Device Type"),
+            onChanged: _onTypeChanged,
+            validator: (value) => value == null ? "Select Device Type" : null,
+          ),
+        ],
       ),
     ));
 
-    // Type Dropdown
-    children.add(Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
-      child: DropdownButtonFormField<String>(
-        items: _availableTypes.map((String val) {
-          return DropdownMenuItem<String>(
-            value: val,
-            child: Text(val),
-          );
-        }).toList(),
-        value: _selectedType,
-        decoration: InputDecoration(
-          labelText: "Device Type",
-          filled: true,
-          fillColor: Colors.grey.withOpacity(0.04),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-        onChanged: _onTypeChanged,
-        validator: (value) => value == null ? "Select Device Type" : null,
+    // Network Configuration Card
+    children.add(_buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildSectionHeader("Network Configuration", Icons.wifi_rounded),
+          _buildTextField(
+            controller: _ipController,
+            label: "IP Address",
+            validator: (value) {
+              if (value == null || value.isEmpty) return "IP Address is required";
+              return null;
+            },
+          ),
+          const SizedBox(height: 20),
+          _buildTextField(
+            controller: _timeoutController,
+            label: "Timeout (ms)",
+            keyboardType: TextInputType.number,
+            validator: (value) {
+                if (value != null && value.isNotEmpty && int.tryParse(value) == null) return "Must be integer";
+                return null;
+            }
+          ),
+        ],
       ),
     ));
 
-    children.add(_buildTextField(
-      controller: _ipController,
-      label: "IP Address",
-      validator: (value) {
-        if (value == null || value.isEmpty) return "IP Address is required";
-        return null;
-      },
-    ));
-
-    // Conditionally Show Ports
-    
-    // Always show Control Port? User didn't say hide it.
-    children.add(_buildTextField(
+    // Port Configuration Card
+    List<Widget> portFields = [];
+    portFields.add(_buildSectionHeader("Port Configuration", Icons.settings_ethernet_rounded));
+    portFields.add(_buildTextField(
       controller: _controlPortController,
       label: "Control Port",
       keyboardType: TextInputType.number,
@@ -381,97 +462,62 @@ class StateDeviceIP extends State<DeviceIP> {
       }
     ));
 
-    // Alternate Control Port Logic
     bool showAltControlPort = true;
     if (_selectedType != null) {
       if (['SA', 'PM', 'PPM', 'SG', 'TSM', 'GTx', 'VSG'].contains(_selectedType)) {
         showAltControlPort = false;
       }
-      // VSA -> Show (implied not hidden)
-      // DataPattern (GTx usually? But user says GTx hide alt control port)
-      // Wait, "GTx - AlternateControlPort" hidden. 
-      // If DataPattern has different requirement: "For DataPAattern, All port should be filled by 0". Does not explicitly say hide. 
-      // User says: "Following fields should not be present for following device type... GTx - AlternateControlPort".
-      // DataPattern uses GTx type usually.
     }
     
     if (showAltControlPort) {
-        children.add(_buildTextField(
+        portFields.add(const SizedBox(height: 20));
+        portFields.add(_buildTextField(
           controller: _altControlPortController,
           label: "Alternate Control Port",
           keyboardType: TextInputType.number,
         ));
     }
 
-    // Read Port Logic
     bool showReadPort = true;
     if (_selectedType != null) {
       if (['SA', 'PM', 'PPM', 'SG', 'TSM', 'VSA', 'VSG'].contains(_selectedType)) {
         showReadPort = false;
       }
-      // GTx -> Show (Cortex/TTCP needs ReadPort 3000)
     }
 
     if (showReadPort) {
-        children.add(_buildTextField(
+        portFields.add(const SizedBox(height: 20));
+        portFields.add(_buildTextField(
           controller: _readPortController,
           label: "Read Port",
           keyboardType: TextInputType.number,
         ));
     }
 
-    // Doppler Port Logic
     bool showDopplerPort = true;
     if (_selectedType != null) {
       if (['SA', 'PM', 'PPM', 'SG', 'TSM', 'VSA', 'VSG'].contains(_selectedType)) {
         showDopplerPort = false;
       }
-      // GTx -> Show (Cortex/TTCP needs DopplerPort 3065)
     }
 
     if (showDopplerPort) {
-        children.add(_buildTextField(
+        portFields.add(const SizedBox(height: 20));
+        portFields.add(_buildTextField(
           controller: _dopplerPortController,
           label: "Doppler Port",
           keyboardType: TextInputType.number,
         ));
     }
 
-    children.add(_buildTextField(
-      controller: _timeoutController,
-      label: "Timeout (ms)",
-      keyboardType: TextInputType.number,
-      validator: (value) {
-          if (value != null && value.isNotEmpty && int.tryParse(value) == null) return "Must be integer";
-          return null;
-      }
-    ));
-    
-    return children;
-  }
-
-  Widget _buildTextField({
-    required TextEditingController controller, 
-    required String label, 
-    String? Function(String?)? validator,
-    TextInputType? keyboardType,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 20.0),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          labelText: label,
-          filled: true,
-          fillColor: Colors.grey.withOpacity(0.04),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
-          enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        ),
-        validator: validator,
+    children.add(_buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: portFields,
       ),
-    );
+    ));
+
+    return children;
   }
 
   void update(bool edit) async {
@@ -514,32 +560,58 @@ class StateDeviceIP extends State<DeviceIP> {
     return Container(
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
+          )
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header
           Container(
-             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 28),
              decoration: BoxDecoration(
                color: Theme.of(context).colorScheme.surface,
-               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor)),
+               border: Border(bottom: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5), width: 1.5)),
              ),
-             child: Text(
-               widget.global.rowSelected.isEmpty ? "Add New Device" : "Edit Device Configuration", 
-               style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)
+             child: Row(
+               children: [
+                 Container(
+                   padding: const EdgeInsets.all(12),
+                   decoration: BoxDecoration(
+                     color: Theme.of(context).colorScheme.primaryContainer,
+                     borderRadius: BorderRadius.circular(12),
+                   ),
+                   child: Icon(
+                     widget.global.rowSelected.isEmpty ? Icons.add_box_outlined : Icons.edit_note_rounded,
+                     color: Theme.of(context).colorScheme.onPrimaryContainer,
+                   ),
+                 ),
+                 const SizedBox(width: 20),
+                 Text(
+                   widget.global.rowSelected.isEmpty ? "Add New Device" : "Edit Device Configuration", 
+                   style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700, letterSpacing: -0.5)
+                 ),
+               ],
              ),
           ),
           
           Expanded(
-            child: Form(
-              key: _formKey,
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: children,
+            child: Container(
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
+              child: Form(
+                key: _formKey,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: children,
+                  ),
                 ),
               ),
             ),
@@ -548,8 +620,8 @@ class StateDeviceIP extends State<DeviceIP> {
           Container(
              padding: EdgeInsets.zero,
              decoration: BoxDecoration(
-               color: Theme.of(context).colorScheme.surfaceContainerLow,
-               border: Border(top: BorderSide(color: Theme.of(context).dividerColor)),
+               color: Theme.of(context).colorScheme.surface,
+               border: Border(top: BorderSide(color: Theme.of(context).dividerColor.withOpacity(0.5), width: 1.5)),
              ),
              child: button
           ),

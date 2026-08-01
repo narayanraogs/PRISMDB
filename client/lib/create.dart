@@ -532,18 +532,25 @@ class StateCreate extends State<Create> {
       width: width,
       height: height,
       margin: const EdgeInsets.all(8.0),
-      decoration: BoxDecoration(color: Theme.of(context).colorScheme.surface,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardTheme.color ?? Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16.0),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
+            color: Theme.of(context).shadowColor.withOpacity(0.08),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
-        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerLowest, width: 1.0),
+        border: Border.all(
+          color: Theme.of(context).dividerColor.withOpacity(0.3), 
+          width: 1.0,
+        ),
       ),
-      child: Padding(padding: const EdgeInsets.all(16.0), child: child),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0), 
+        child: child,
+      ),
     );
   }
 
@@ -556,8 +563,8 @@ class StateCreate extends State<Create> {
       children: [
         FilledButton.icon(
           style: FilledButton.styleFrom(
-            backgroundColor: Colors.blue.withValues(alpha: 0.1),
-            foregroundColor: Colors.blue,
+            backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            foregroundColor: Theme.of(context).colorScheme.primary,
             elevation: 0,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             textStyle: const TextStyle(fontSize: 13),
@@ -588,20 +595,21 @@ class StateCreate extends State<Create> {
     return InputDecoration(
       labelText: labelText,
       filled: true,
-      fillColor: Colors.transparent,
+      fillColor: Theme.of(context).colorScheme.surface,
       border: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.grey.shade400, width: 1),
-        borderRadius: BorderRadius.circular(8.0),
+        borderSide: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+        borderRadius: BorderRadius.circular(12.0),
       ),
       enabledBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant, width: 1),
-        borderRadius: BorderRadius.circular(8.0),
+        borderSide: BorderSide(color: Theme.of(context).dividerColor, width: 1),
+        borderRadius: BorderRadius.circular(12.0),
       ),
       focusedBorder: OutlineInputBorder(
-        borderSide: BorderSide(color: Colors.blue.shade400, width: 2),
-        borderRadius: BorderRadius.circular(8.0),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.primary, width: 2),
+        borderRadius: BorderRadius.circular(12.0),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
     );
   }
 
@@ -611,15 +619,15 @@ class StateCreate extends State<Create> {
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 28, color: const Color(0xFF3E2723)),
+            Icon(icon, size: 28, color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 12),
           ],
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF3E2723),
+              color: Theme.of(context).colorScheme.onSurface,
               letterSpacing: -0.5,
             ),
           ),
@@ -678,6 +686,7 @@ class StateCreate extends State<Create> {
     sanetizeConfigValues();
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Sidebar Navigation
         Container(
@@ -685,18 +694,18 @@ class StateCreate extends State<Create> {
           color: Colors.white,
           child: Column(
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 32.0, horizontal: 24.0),
                 child: Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: Colors.blue, size: 28),
-                    SizedBox(width: 12),
+                    Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary, size: 28),
+                    const SizedBox(width: 12),
                     Text(
                       "Setup",
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF3E2723),
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -726,7 +735,7 @@ class StateCreate extends State<Create> {
                   height: 50,
                   child: FilledButton.icon(
                     style: FilledButton.styleFrom(
-                      backgroundColor: Colors.green.shade600,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -804,7 +813,7 @@ class StateCreate extends State<Create> {
                                 width: double.infinity,
                                 child: FilledButton.icon(
                                   style: FilledButton.styleFrom(
-                                    backgroundColor: Colors.blue.shade600,
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(12),
                                     ),
@@ -824,6 +833,9 @@ class StateCreate extends State<Create> {
                       ],
                     ),
 
+                    const SizedBox(height: 20),
+                    Divider(color: Theme.of(context).dividerColor, thickness: 1),
+                    
                     // Receivers Section
                     Column(
                       key: _rxKey,
@@ -948,6 +960,9 @@ class StateCreate extends State<Create> {
               ],
             ),
 
+                    const SizedBox(height: 20),
+                    Divider(color: Theme.of(context).dividerColor, thickness: 1),
+                    
                     // Transmitters Section
                     Column(
                       key: _txKey,
@@ -1078,6 +1093,9 @@ class StateCreate extends State<Create> {
               ],
             ),
 
+                    const SizedBox(height: 20),
+                    Divider(color: Theme.of(context).dividerColor, thickness: 1),
+                    
                     // Transponders Section
                     Column(
                       key: _tpKey,
@@ -1210,6 +1228,9 @@ class StateCreate extends State<Create> {
               ],
             ),
 
+                    const SizedBox(height: 20),
+                    Divider(color: Theme.of(context).dividerColor, thickness: 1),
+                    
                     // Payloads Section
                     Column(
                       key: _plKey,
@@ -1354,6 +1375,9 @@ class StateCreate extends State<Create> {
               ],
             ),
 
+                    const SizedBox(height: 20),
+                    Divider(color: Theme.of(context).dividerColor, thickness: 1),
+                    
                     // Configurations Section
                     Column(
                       key: _configKey,
@@ -1620,13 +1644,13 @@ class StateCreate extends State<Create> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 4.0),
       child: Material(
-        color: isSelected ? Colors.blue.withValues(alpha: 0.1) : Colors.transparent,
+        color: isSelected ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: ListTile(
           onTap: () => _scrollToSection(key, index),
           leading: Icon(
             icon,
-            color: isSelected ? Colors.blue : Colors.grey.shade600,
+            color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
             size: 20,
           ),
           title: Text(
@@ -1634,7 +1658,7 @@ class StateCreate extends State<Create> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-              color: isSelected ? Colors.blue.shade700 : Colors.grey.shade700,
+              color: isSelected ? Theme.of(context).colorScheme.primary : Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
           shape: RoundedRectangleBorder(

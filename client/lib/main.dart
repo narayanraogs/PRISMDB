@@ -28,7 +28,7 @@ class PrismApp extends StatefulWidget {
 }
 
 class _PrismAppState extends State<PrismApp> {
-  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode _themeMode = ThemeMode.light;
 
   void toggleTheme() {
     setState(() {
@@ -50,49 +50,50 @@ class _PrismAppState extends State<PrismApp> {
         brightness: Brightness.light,
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.light().textTheme),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blue,
+          seedColor: const Color(0xFF7B92B3),
           brightness: Brightness.light,
-          primary: Colors.blue.shade700,
+          primary: const Color(0xFF7B92B3), // Subtle Pastel Blue-Grey
           onPrimary: Colors.white,
-          secondary: Colors.lightBlue,
+          secondary: const Color(0xFFA1B5D8), // Lighter Pastel Blue
           surface: Colors.white,
-          onSurface: Colors.black87,
+          onSurface: const Color(0xFF334155),
         ),
-        scaffoldBackgroundColor: const Color(0xFFF3F4F6), // Light gray background
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
         dividerTheme: DividerThemeData(
-          color: Colors.blue.withOpacity(0.15),
+          color: const Color(0xFF7B92B3).withOpacity(0.2),
         ),
         appBarTheme: AppBarTheme(
-          backgroundColor: Colors.blue.shade700,
-          foregroundColor: Colors.white,
+          backgroundColor: const Color(0xFFF8FAFC),
+          foregroundColor: const Color(0xFF334155),
           elevation: 0,
           titleTextStyle: GoogleFonts.poppins(
-            color: Colors.white,
+            color: const Color(0xFF334155),
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: Color(0xFF334155)),
         ),
         cardTheme: CardThemeData(
           color: Colors.white,
-          elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.1),
+          elevation: 0,
+          shadowColor: const Color(0xFF7B92B3).withOpacity(0.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.blue.withOpacity(0.2)),
+            side: const BorderSide(color: Color(0xFFE2E8F0)),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            backgroundColor: Colors.blue.shade700,
+            backgroundColor: const Color(0xFF7B92B3),
             foregroundColor: Colors.white,
             textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
           ),
         ),
         scrollbarTheme: ScrollbarThemeData(
-          thumbColor: WidgetStateProperty.all(Colors.blue.withOpacity(0.5)),
-          trackColor: WidgetStateProperty.all(Colors.grey.shade200),
+          thumbColor: WidgetStateProperty.all(const Color(0xFF7B92B3).withOpacity(0.5)),
+          trackColor: WidgetStateProperty.all(Colors.grey.shade100),
           trackVisibility: WidgetStateProperty.all(false),
           thumbVisibility: WidgetStateProperty.all(false),
           radius: const Radius.circular(8),
@@ -103,25 +104,24 @@ class _PrismAppState extends State<PrismApp> {
       darkTheme: ThemeData(
         useMaterial3: true,
         brightness: Brightness.dark,
-        // Set default font to Poppins for a modern, bold look with dark text theme base
         textTheme: GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E3A8A), // Deep Slate/Midnight Blue seed
+          seedColor: const Color(0xFF64748B),
           brightness: Brightness.dark,
-          primary: const Color(0xFF3B82F6), // Vibrant royal blue
-          onPrimary: Colors.white,
-          secondary: const Color(0xFF60A5FA), // Accent light blue
+          primary: const Color(0xFF94A3B8), // Muted Slate Blue
+          onPrimary: const Color(0xFF0F172A),
+          secondary: const Color(0xFFCBD5E1), // Light Slate
           surface: const Color(0xFF1E293B), // Slate 800
           background: const Color(0xFF0F172A), // Slate 900
           onSurface: const Color(0xFFF8FAFC), // Slate 50
         ),
-        scaffoldBackgroundColor: const Color(0xFF0A0F1D), // Dark midnight background
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
         dividerTheme: DividerThemeData(
-          color: Colors.blue.withOpacity(0.15),
+          color: const Color(0xFF94A3B8).withOpacity(0.15),
         ),
         appBarTheme: AppBarTheme(
           backgroundColor: const Color(0xFF0F172A),
-          foregroundColor: const Color(0xFFF8FAFC), // Off-white
+          foregroundColor: const Color(0xFFF8FAFC), 
           elevation: 0,
           titleTextStyle: GoogleFonts.poppins(
             color: const Color(0xFFF8FAFC),
@@ -131,24 +131,25 @@ class _PrismAppState extends State<PrismApp> {
           iconTheme: const IconThemeData(color: Color(0xFFF8FAFC)),
         ),
         cardTheme: CardThemeData(
-          color: const Color(0xFF151F32), // Darker blue-slate card color
-          elevation: 2,
-          shadowColor: Colors.black.withOpacity(0.3),
+          color: const Color(0xFF1E293B),
+          elevation: 0,
+          shadowColor: Colors.black.withOpacity(0.2),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Colors.blue.withOpacity(0.1)),
+            side: const BorderSide(color: Color(0xFF334155)),
           ),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-            backgroundColor: const Color(0xFF3B82F6),
-            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFF94A3B8),
+            foregroundColor: const Color(0xFF0F172A),
             textStyle: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 0,
           ),
         ),
         scrollbarTheme: ScrollbarThemeData(
-          thumbColor: WidgetStateProperty.all(const Color(0xFF3B82F6).withOpacity(0.5)),
+          thumbColor: WidgetStateProperty.all(const Color(0xFF94A3B8).withOpacity(0.5)),
           trackColor: WidgetStateProperty.all(const Color(0xFF1E293B)),
           trackVisibility: WidgetStateProperty.all(false),
           thumbVisibility: WidgetStateProperty.all(false),
