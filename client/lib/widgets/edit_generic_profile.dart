@@ -323,11 +323,15 @@ class _EditGenericProfileState extends State<EditGenericProfile> {
   }
 
   Widget _buildDropdown(String label, List<String> options, String? value, ValueChanged<String?> onChanged) {
+    List<String> effectiveOptions = List.from(options);
+    if (value != null && value.isNotEmpty && !effectiveOptions.contains(value)) {
+      effectiveOptions.add(value);
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: DropdownButtonFormField<String>(
-        value: options.contains(value) ? value : null,
-        items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+        value: (value != null && effectiveOptions.contains(value)) ? value : null,
+        items: effectiveOptions.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: onChanged,
         decoration: _inputDecoration(label),
         validator: (v) => v == null ? "Required" : null,

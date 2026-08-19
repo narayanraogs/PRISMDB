@@ -560,84 +560,72 @@ class StateConfigurations extends State<Configurations> {
   }
 
   DropdownButtonFormField<String> getTxNameDropdown() {
-    List<DropdownMenuItem<String>> entries = [];
-    for (String txName in _txNames) {
-      var item = DropdownMenuItem<String>(
-        value: txName,
-        child: Text(txName),
-      );
-      entries.add(item);
+    List<String> list = List.from(_txNames);
+    if (_txName.isNotEmpty && !list.contains(_txName)) {
+      list.add(_txName);
     }
+    List<DropdownMenuItem<String>> entries = list.map((txName) => DropdownMenuItem<String>(value: txName, child: Text(txName))).toList();
     return DropdownButtonFormField<String>(
       items: entries,
       isExpanded: true,
-      value: (_txNames.contains(_txName)) ? _txName : (_txNames.isNotEmpty ? _txNames.first : null),
+      value: (list.contains(_txName)) ? _txName : (list.isNotEmpty ? list.first : null),
       decoration: _buildInputDecoration("Transmitter Name"),
       onChanged: (String? value) {
-        _txName = value ?? (_txNames.isNotEmpty ? _txNames.first : '');
+        _txName = value ?? (list.isNotEmpty ? list.first : '');
         setState(() {});
       },
     );
   }
 
   DropdownButtonFormField<String> getTpNameDropdown() {
-    List<DropdownMenuItem<String>> entries = [];
-    for (String tpName in _tpNames) {
-      var item = DropdownMenuItem<String>(
-        value: tpName,
-        child: Text(tpName),
-      );
-      entries.add(item);
+    List<String> list = List.from(_tpNames);
+    if (_tpName.isNotEmpty && !list.contains(_tpName)) {
+      list.add(_tpName);
     }
+    List<DropdownMenuItem<String>> entries = list.map((tpName) => DropdownMenuItem<String>(value: tpName, child: Text(tpName))).toList();
     return DropdownButtonFormField<String>(
       items: entries,
       isExpanded: true,
-      value: (_tpNames.contains(_tpName)) ? _tpName : (_tpNames.isNotEmpty ? _tpNames.first : null),
+      value: (list.contains(_tpName)) ? _tpName : (list.isNotEmpty ? list.first : null),
       decoration: _buildInputDecoration("Transponder Name"),
       onChanged: (String? value) {
-        _tpName = value ?? (_tpNames.isNotEmpty ? _tpNames.first : '');
+        _tpName = value ?? (list.isNotEmpty ? list.first : '');
         setState(() {});
       },
     );
   }
 
   DropdownButtonFormField<String> getPlNameDropdown() {
-    List<DropdownMenuItem<String>> entries = [];
-    for (String plName in _plNames) {
-      var item = DropdownMenuItem<String>(
-        value: plName,
-        child: Text(plName),
-      );
-      entries.add(item);
+    List<String> list = List.from(_plNames);
+    if (_plName.isNotEmpty && !list.contains(_plName)) {
+      list.add(_plName);
     }
+    List<DropdownMenuItem<String>> entries = list.map((plName) => DropdownMenuItem<String>(value: plName, child: Text(plName))).toList();
     return DropdownButtonFormField<String>(
       items: entries,
       isExpanded: true,
-      value: (_plNames.contains(_plName)) ? _plName : (_plNames.isNotEmpty ? _plNames.first : null),
+      value: (list.contains(_plName)) ? _plName : (list.isNotEmpty ? list.first : null),
       decoration: _buildInputDecoration("Payload Name"),
       onChanged: (String? value) {
-        _plName = value ?? (_plNames.isNotEmpty ? _plNames.first : '');
+        _plName = value ?? (list.isNotEmpty ? list.first : '');
         setState(() {});
       },
     );
   }
 
   DropdownButtonFormField<String> getTSMNameDropdown() {
-    List<DropdownMenuItem<String>> entries = [];
-    for (String tsm in _tsmNames) {
-      var item = DropdownMenuItem<String>(
-        value: tsm,
-        child: Text(tsm),
-      );
-      entries.add(item);
+    List<String> list = List.from(_tsmNames);
+    if (_tsmName.isNotEmpty && !list.contains(_tsmName)) {
+      list.add(_tsmName);
     }
+    List<DropdownMenuItem<String>> entries = list.map((tsm) => DropdownMenuItem<String>(value: tsm, child: Text(tsm))).toList();
     return DropdownButtonFormField<String>(
       items: entries,
       isExpanded: true,
-      value: (_tsmNames.contains(_tsmName)) ? _tsmName : (_tsmNames.isNotEmpty ? _tsmNames.first : null),
+      value: (list.contains(_tsmName)) ? _tsmName : (list.isNotEmpty ? list.first : null),
       decoration: _buildInputDecoration("TSM Configuration Name"),
       onChanged: (String? value) {
-        _tsmName = value ?? (_tsmNames.isNotEmpty ? _tsmNames.first : '');
+        _tsmName = value ?? (list.isNotEmpty ? list.first : '');
         setState(() {});
       },
     );
@@ -707,21 +695,18 @@ class StateConfigurations extends State<Configurations> {
   }
 
   DropdownButtonFormField<String> getRxNameDropdown() {
-    List<DropdownMenuItem<String>> entries = [];
-    for (String rxName in _rxNames) {
-      var item = DropdownMenuItem<String>(
-        value: rxName,
-        child: Text(rxName),
-      );
-      entries.add(item);
+    List<String> list = List.from(_rxNames);
+    if (_rxName.isNotEmpty && !list.contains(_rxName)) {
+      list.add(_rxName);
     }
+    List<DropdownMenuItem<String>> entries = list.map((rxName) => DropdownMenuItem<String>(value: rxName, child: Text(rxName))).toList();
     return DropdownButtonFormField<String>(
       items: entries,
       isExpanded: true,
-      value: (_rxNames.contains(_rxName)) ? _rxName : (_rxNames.isNotEmpty ? _rxNames.first : null),
+      value: (list.contains(_rxName)) ? _rxName : (list.isNotEmpty ? list.first : null),
       decoration: _buildInputDecoration("Receiver Name"),
       onChanged: (String? value) {
-        _rxName = value ?? (_rxNames.isNotEmpty ? _rxNames.first : '');
+        _rxName = value ?? (list.isNotEmpty ? list.first : '');
         setState(() {});
       },
     );
@@ -749,21 +734,18 @@ class StateConfigurations extends State<Configurations> {
   }
 
   DropdownButtonFormField<String> getDeviceProfileDropdown() {
-    List<DropdownMenuItem<String>> entries = [];
-    for (String dp in _deviceProfiles) {
-      var item = DropdownMenuItem<String>(
-        value: dp,
-        child: Text(dp),
-      );
-      entries.add(item);
+    List<String> list = List.from(_deviceProfiles);
+    if (_deviceProfileName.isNotEmpty && !list.contains(_deviceProfileName)) {
+      list.add(_deviceProfileName);
     }
+    List<DropdownMenuItem<String>> entries = list.map((dp) => DropdownMenuItem<String>(value: dp, child: Text(dp))).toList();
     return DropdownButtonFormField<String>(
       items: entries,
       isExpanded: true,
-      value: (_deviceProfiles.contains(_deviceProfileName)) ? _deviceProfileName : (_deviceProfiles.isNotEmpty ? _deviceProfiles.first : null),
+      value: (list.contains(_deviceProfileName)) ? _deviceProfileName : (list.isNotEmpty ? list.first : null),
       decoration: _buildInputDecoration("Device Profile Name"),
       onChanged: (String? value) {
-        _deviceProfileName = value ?? (_deviceProfiles.isNotEmpty ? _deviceProfiles.first : '');
+        _deviceProfileName = value ?? (list.isNotEmpty ? list.first : '');
         setState(() {});
       },
     );

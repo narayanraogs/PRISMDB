@@ -226,7 +226,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	// Frequency Profile for CDMA Doppler Test
 	if modulation == "CDMA" {
 		query := `INSERT OR REPLACE INTO FrequencyProfile(Name, MaxFrequency,StepSize,CommandingRequired,DopplerFile)VALUES (?,?,?,?,?)`
-		_, err = tx.Exec(query, "Doppler-CDMA", 125000.0, 25000.0, "Yes", "/umacs/umacsops/sarc/resources/doppler.csv")
+		_, err = tx.Exec(query, "Doppler-CDMA", 125000.0, 25000.0, "Yes", "/umacsops/prism/doppler/doppler.csv")
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -240,7 +240,7 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 	// Test Specific Profile for receiver in PowerProfile Table
 	if modulation == "FM" || modulation == "PSK" || modulation == "FSK" {
 		query := `INSERT OR REPLACE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
-		_, err = tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
+		_, err = tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 100, 10)
 		if err != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -251,8 +251,8 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 		}
 	} else if modulation == "PM" {
 		query := `INSERT OR REPLACE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
-		_, err1 := tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 20, 20)
-		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
+		_, err1 := tx.Exec(query, "CommandThreshold", "-75,-80,-90,-95,-100,-103,-104,-105", 100, 10)
+		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 100, 10)
 		if err1 != nil || err2 != nil {
 			tx.Rollback()
 			return utils.Ack{
@@ -262,8 +262,8 @@ func autoPopulateRxRelated(db *sql.DB, rxName string, freq float64, modulation s
 		}
 	} else if modulation == "CDMA" {
 		query := `INSERT OR REPLACE INTO PowerProfile(Name, PowerLevels, NoOfCommandsAtThreshold, NoOfCommandsAtOtherLevels)VALUES (?,?,?,?)`
-		_, err = tx.Exec(query, "DopplerProfile", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
-		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 20, 20)
+		_, err = tx.Exec(query, "DopplerProfile", "-75,-80,-90,-95,-100,-105,-110", 100, 10)
+		_, err2 := tx.Exec(query, "LockThreshold", "-75,-80,-90,-95,-100,-105,-110", 100, 10)
 		if err != nil || err2 != nil {
 			fmt.Println(err)
 			tx.Rollback()
@@ -889,7 +889,7 @@ func populateRxTestsForConfig(tx *sql.Tx, configName string, rxName string) util
 	rows.Close()
 	var null sql.NullString
 	null.Valid = true
-	null.String = "Default"
+	null.String = ""
 	var normal sql.NullString
 	normal.Valid = true
 	normal.String = "Normal"
@@ -901,7 +901,7 @@ func populateRxTestsForConfig(tx *sql.Tx, configName string, rxName string) util
 	verify.String = "Verify"
 	var verifyDoppler sql.NullString
 	verifyDoppler.Valid = true
-	verifyDoppler.String = "VerifyDoppler"
+	verifyDoppler.String = "Doppler"
 
 	rxTestTypes := make([]string, 0)
 	rxTestCategories := make([]sql.NullString, 0)
@@ -947,20 +947,20 @@ func populateTxTestsForConfig(tx *sql.Tx, configName string, txName string) util
 	if err != nil {
 		return utils.Ack{
 			OK:      false,
-			Message: "Cannot get Modulation from SpexTX Table",
+			Message: "Cannot get Modulation from SpecTX Table",
 		}
 	}
 	modulation, ok := readSingleString(rows)
 	if !ok {
 		return utils.Ack{
 			OK:      false,
-			Message: "Cannot get Modulation from SpexTX Table",
+			Message: "Cannot get Modulation from SpecTX Table",
 		}
 	}
 	rows.Close()
 	var null sql.NullString
 	null.Valid = true
-	null.String = "Default"
+	null.String = ""
 
 	var power sql.NullString
 	var harm sql.NullString
@@ -984,13 +984,13 @@ func populateTxTestsForConfig(tx *sql.Tx, configName string, txName string) util
 	txTestTypes := make([]string, 0)
 	txTestCategories := make([]sql.NullString, 0)
 	if modulation == "PM" {
-		txTestTypes = append(txTestTypes, "PowerMeasurement", "FrequencyMeasurement", "HarmonicsMeasurement", "SpuriousMeasurement", "SpuriousMeasurement", "ModIndexMeasurement", "ModIndexMeasurement")
+		txTestTypes = append(txTestTypes, "Power", "Frequency", "Harmonics", "Spurious", "Spurious", "ModIndex", "ModIndex")
 		txTestCategories = append(txTestCategories, power, null, harm, inband, outband, subcarrTM, subcarrPB)
 	} else if modulation == "PSK" {
-		txTestTypes = append(txTestTypes, "PowerMeasurement", "FrequencyMeasurement", "HarmonicsMeasurement", "SpuriousMeasurement", "SpuriousMeasurement", "BandwidthMeasurement")
+		txTestTypes = append(txTestTypes, "Power", "Frequency", "Harmonics", "Spurious", "Spurious", "Bandwidth")
 		txTestCategories = append(txTestCategories, power, null, harm, inband, outband, null)
 	} else {
-		txTestTypes = append(txTestTypes, "PowerMeasurement", "FrequencyMeasurement", "HarmonicsMeasurement", "SpuriousMeasurement", "SpuriousMeasurement")
+		txTestTypes = append(txTestTypes, "Power", "Frequency", "Harmonics", "Spurious", "Spurious")
 		txTestCategories = append(txTestCategories, power, null, harm, inband, outband)
 	}
 
@@ -1033,7 +1033,7 @@ func populateTpTestsForConfig(tx *sql.Tx, configName string, tpName string) util
 
 	tpTestTypes := make([]string, 0)
 	tpTestCategories := make([]sql.NullString, 0)
-	tpTestTypes = append(tpTestTypes, "Ranging", "Ranging", "SimultaneousCommandingAndRanging", "SimultaneousCommandingAndRanging", "ModIndexMeasurement", "ModIndexMeasurement", "ModIndexMeasurement", "ModIndexMeasurement")
+	tpTestTypes = append(tpTestTypes, "Ranging", "Ranging", "SimultaneousCommandingAndRanging", "SimultaneousCommandingAndRanging", "ModIndex", "ModIndex", "ModIndex", "ModIndex")
 	tpTestCategories = append(tpTestCategories, majorTone, minorTone, majorTone, minorTone, majorTone, minorTone, subCarr1, subCarr2)
 
 	for i := range len(tpTestTypes) {
@@ -1124,7 +1124,7 @@ func getDefaultForRxTests(testType string, testCategory sql.NullString, rxName s
 		power.String = "CommandThreshold"
 		loopStress.Valid = false
 	}
-	if strings.EqualFold(testCategory.String, "VerifyDoppler") {
+	if strings.EqualFold(testCategory.String, "Doppler") {
 		power.Valid = true
 		power.String = "DopplerProfile"
 		loopStress.Valid = true
@@ -1140,9 +1140,9 @@ func getDefaultForRxTests(testType string, testCategory sql.NullString, rxName s
 		power.String = "Frequency"
 		loopStress.Valid = true
 		if testCategory.String == "Extreme" {
-			loopStress.String = "Frequency-Extreme"
+			loopStress.String = "LoopStress-Extreme"
 		} else if testCategory.String == "Normal" {
-			loopStress.String = "Frequency-Normal"
+			loopStress.String = "LoopStress-Normal"
 		}
 	}
 	if strings.EqualFold(testType, "CarrierAcquisition") {
@@ -1150,9 +1150,9 @@ func getDefaultForRxTests(testType string, testCategory sql.NullString, rxName s
 		power.String = "Frequency"
 		loopStress.Valid = true
 		if testCategory.String == "Extreme" {
-			loopStress.String = "Frequency-Extreme"
+			loopStress.String = "CarrierAcq-Extreme"
 		} else if testCategory.String == "Normal" {
-			loopStress.String = "Frequency-Normal"
+			loopStress.String = "CarrierAcq-Normal"
 		}
 
 	}
@@ -1180,11 +1180,11 @@ func getDefaultForTxTests(testType string, testCategory sql.NullString, txName s
 	tm.String = txName + "-TM"
 
 	var values = make([]sql.NullString, 0)
-	if strings.EqualFold(testType, "PowerMeasurement") {
+	if strings.EqualFold(testType, "Power") {
 		obwPower.Valid = true
 		obwPower.String = "TxProfile"
 	}
-	if strings.EqualFold(testType, "SpuriousMeasurement") {
+	if strings.EqualFold(testType, "Spurious") {
 		dlSpectrum.Valid = true
 		dlSpectrum.String = txName + "-" + testCategory.String
 	}

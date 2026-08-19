@@ -161,6 +161,7 @@ class StateDeviceIP extends State<DeviceIP> {
     switch (_selectedMake) {
       case 'N9040B':
       case 'N9030B':
+      case 'N9030A':
       case 'N9040A':
         _availableTypes = ['SA', 'VSA'];
         break;

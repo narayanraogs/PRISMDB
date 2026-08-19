@@ -68,7 +68,7 @@ class _EditTestsState extends State<EditTests> {
     'LockDynamic': ['Verify', 'Establish', 'Doppler'],
     'CarrierAcquisition': ['Normal', 'Extreme'],
     'LoopStress': ['Normal', 'Extreme'],
-    'Harmonics': ['Harmonic', 'Sub-Harmonic'],
+    'Harmonics': ['Harmonics', 'Sub-Harmonics'],
     'Spurious': ['In-Band', 'Out-Band'],
     'PulseMeasurement': ['PPM'],
     'PulseAnalysis': ['VSA'],
@@ -310,11 +310,16 @@ class _EditTestsState extends State<EditTests> {
     List<Widget> children = [];
     
     // 2. Config Name Dropdown
+    List<String> configList = List.from(_configNames);
+    if (_selectedConfigName != null && !configList.contains(_selectedConfigName)) {
+      configList.add(_selectedConfigName!);
+    }
+
     children.add(const Text("Configuration Name", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)));
     children.add(const SizedBox(height: 8));
     children.add(DropdownButtonFormField<String>(
-      value: _configNames.contains(_selectedConfigName) ? _selectedConfigName : null,
-      items: _configNames.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+      value: (configList.contains(_selectedConfigName)) ? _selectedConfigName : null,
+      items: configList.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
       onChanged: (val) {
         if (val != null) {
           setState(() {
@@ -357,13 +362,16 @@ class _EditTestsState extends State<EditTests> {
     if (_selectedTestType == null) return children;
 
     // 4. Test Category Dropdown
-    List<String> categories = _categoriesByTestType[_selectedTestType] ?? [];
+    List<String> categories = List.from(_categoriesByTestType[_selectedTestType] ?? []);
+    if (_selectedTestCategory != null && !categories.contains(_selectedTestCategory)) {
+      categories.add(_selectedTestCategory!);
+    }
     
-    if (categories.isNotEmpty) {
+    if (categories.isNotEmpty || _selectedTestCategory != null) {
       children.add(const Text("Test Category", style: TextStyle(fontWeight: FontWeight.bold, color: Colors.indigo)));
       children.add(const SizedBox(height: 8));
       children.add(DropdownButtonFormField<String>(
-        value: categories.contains(_selectedTestCategory) ? _selectedTestCategory : null,
+        value: (categories.contains(_selectedTestCategory)) ? _selectedTestCategory : null,
         items: categories.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: (val) {
           setState(() {
@@ -440,19 +448,18 @@ class _EditTestsState extends State<EditTests> {
   }
 
   Widget _buildProfileDropdown(String key, String label) {
-    List<String> options = _profileOptions[key] ?? [];
+    List<String> options = List.from(_profileOptions[key] ?? []);
     String? currentValue = _selectedProfiles[key];
     
     // If current value is set but not in options (fetched yet or deleted), add it temporarily so it shows
-    if (currentValue != null && !options.contains(currentValue)) {
+    if (currentValue != null && currentValue.isNotEmpty && !options.contains(currentValue)) {
       options.add(currentValue);
-      // Sort again? Or just leave at end.
     }
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 20.0),
       child: DropdownButtonFormField<String>(
-        value: currentValue,
+        value: (currentValue != null && options.contains(currentValue)) ? currentValue : null,
         items: options.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
         onChanged: (val) {
           setState(() {

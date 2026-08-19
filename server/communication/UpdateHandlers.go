@@ -144,7 +144,7 @@ func addRow(c *gin.Context) {
 		err = handleInsertSpecTxSubCarriers(conn, q, ctx, req)
 	case "spectpranging", "spectransponderranging":
 		err = handleInsertSpecTpRanging(conn, q, ctx, req)
-	case "specrxtmtc", "specrxtm":
+	case "specrxtmtc":
 		err = handleInsertSpecRxTMTC(q, ctx, req)
 	case "configurations":
 		err = handleInsertConfigurations(q, ctx, req)
