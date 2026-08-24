@@ -221,26 +221,29 @@ class _EditDeviceProfileState extends State<EditDeviceProfile> {
     // If not found, check if we have a key that matches case-insensitive, or just show all
     
     List<String> options = [];
-    
-    // Exact match
-    if (_devicesByType.containsKey(typeHint)) {
-       options = _devicesByType[typeHint]!;
+
+    if (typeHint.toLowerCase() == 'pm') {
+      Set<String> set = {};
+      _devicesByType.forEach((k, v) {
+        if (k.toLowerCase() == 'pm' || k.toLowerCase() == 'ppm') {
+          set.addAll(v);
+        }
+      });
+      options = set.toList();
+      if (options.isEmpty && _devicesByType.isEmpty) {
+        options = List.from(_allDevices);
+      }
     } else {
-       // Try case insensitive
-       String? distinctKey = _devicesByType.keys.firstWhere(
-         (k) => k.toLowerCase() == typeHint.toLowerCase(), 
-         orElse: () => ""
-       );
-       if (distinctKey.isNotEmpty) {
-          options = _devicesByType[distinctKey]!;
-       } else {
-          // Fallback: If no type found, maybe the user hasn't set types correctly?
-          // For now, let's show ALL devices if specific type list is empty, 
-          // OR if the user asked for "correspondingly" maybe they expect filtering.
-          // Let's assume if the list is empty, we show nothing (safe) or all?
-          // Showing all is safer if type strings mismatch.
-          options = _allDevices;
-       }
+      Set<String> set = {};
+      _devicesByType.forEach((k, v) {
+        if (k.toLowerCase() == typeHint.toLowerCase()) {
+          set.addAll(v);
+        }
+      });
+      options = set.toList();
+      if (options.isEmpty && _devicesByType.isEmpty) {
+        options = List.from(_allDevices);
+      }
     }
     
     // Ensure current value is in options

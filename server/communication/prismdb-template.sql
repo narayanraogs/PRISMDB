@@ -320,8 +320,8 @@ CREATE TABLE "UplinkLoss" (
     "Profile"       TEXT Not Null,
     UNIQUE ("ConfigName","TestPhaseName")
 );
-INSERT INTO "DownlinkPowerProfile" ("ID", "Name", "OccupiedBW", "PMChannel") VALUES (1,'TxProfile',500000,'10');
-INSERT INTO "DownlinkPowerProfile" ("ID", "Name", "OccupiedBW", "PMChannel") VALUES (2,'PLTxProfile',320000000,'10');
+INSERT INTO "DownlinkPowerProfile" ("ID", "Name", "OccupiedBW", "PMChannel") VALUES (1,'TxProfile',500000,'A');
+INSERT INTO "DownlinkPowerProfile" ("ID", "Name", "OccupiedBW", "PMChannel") VALUES (2,'PLTxProfile',320000000,'A');
 INSERT INTO "Devices" ("ID", "DeviceName", "DeviceMake", "DeviceType", "IPAddress", "ControlPort", "AlternateControlPort", "ReadPort", "DopplerPort", "TimeoutInMillisecs") VALUES (1,'SignalGenerator','E8267D','SG','172.20.x.66',5025,0,0,0,5000);
 INSERT INTO "Devices" ("ID", "DeviceName", "DeviceMake", "DeviceType", "IPAddress", "ControlPort", "AlternateControlPort", "ReadPort", "DopplerPort", "TimeoutInMillisecs") VALUES (2,'SDU&TSM','TSM','TSM','172.20.x.56',5000,0,0,0,5000);
 INSERT INTO "Devices" ("ID", "DeviceName", "DeviceMake", "DeviceType", "IPAddress", "ControlPort", "AlternateControlPort", "ReadPort", "DopplerPort", "TimeoutInMillisecs") VALUES (3,'Cortex-Main','Cortex','GTx','172.20.x.17',3001,0,3000,3065,5000);
